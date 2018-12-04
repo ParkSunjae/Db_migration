@@ -1,0 +1,609 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MemberServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">backend</a> &gt; <a href="index.source.html" class="el_package">kr.co.kyobo.vora.service.member</a> &gt; <span class="el_source">MemberServiceImpl.java</span></div><h1>MemberServiceImpl.java</h1><pre class="source lang-java linenums">package kr.co.kyobo.vora.service.member;
+
+import kr.co.kyobo.vora.common.CommonUtils;
+import kr.co.kyobo.vora.common.encrypt.AES256Util;
+import kr.co.kyobo.vora.common.encrypt.SHA256;
+import kr.co.kyobo.vora.messages.ErrorMessages;
+import kr.co.kyobo.vora.messages.ResultConstants;
+import kr.co.kyobo.vora.model.api.MailDto;
+import kr.co.kyobo.vora.model.api.ResponseEntityUtil;
+import kr.co.kyobo.vora.model.database.*;
+import kr.co.kyobo.vora.model.jwt.JwtClaim;
+import kr.co.kyobo.vora.model.jwt.JwtValidationResult;
+import kr.co.kyobo.vora.model.jwt.LoginResponse;
+import kr.co.kyobo.vora.model.jwt.LoginToken;
+import kr.co.kyobo.vora.model.vo.MemberModifyObj;
+import kr.co.kyobo.vora.model.vo.SignUpRequest;
+import kr.co.kyobo.vora.model.vo.SuggestMember;
+import kr.co.kyobo.vora.repository.*;
+import kr.co.kyobo.vora.service.file.AmazonClient;
+import kr.co.kyobo.vora.service.getIp.IpAddressToCityName;
+import kr.co.kyobo.vora.service.jwt.JwtService;
+import kr.co.kyobo.vora.service.mail.SendMailService;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.EncoderException;
+import org.apache.commons.codec.net.URLCodec;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.GeneralSecurityException;
+import java.util.*;
+
+<span class="nc" id="L44">@Slf4j</span>
+@Service
+@Transactional
+<span class="nc" id="L47">public class MemberServiceImpl implements MemberService {</span>
+
+    @Value(&quot;${userImage.path}&quot;)
+    private String memberPath;
+    @Value(&quot;${userImageThm.path}&quot;)
+    private String memberThumbnailPath;
+
+    @Value(&quot;${mail.auth}&quot;)
+    private String mailAdmin;
+
+    @Value(&quot;${postImage.path}&quot;)
+    private String feedPath;
+
+    @Value(&quot;${postImageThm.path}&quot;)
+    private String feedThumbnailPath;
+
+    @Autowired
+    JwtService jwtService;
+
+    @Autowired
+    AccountRepository accountRepository;
+
+    @Autowired
+    MemberRepository memberRepository;
+
+    @Autowired
+    FilesRepository filesRepository;
+
+    @Autowired
+    MemberFollowMemberRepository memberFollowMemberRepository;
+
+    @Autowired
+    FeedsRepository feedsRepository;
+
+    @Autowired
+    private AmazonClient amazonClient;
+
+    @Autowired
+    private SendMailService sendMailService;
+
+    @Autowired
+    private MemberActivityRepository memberActivityRepository;
+
+    @Autowired
+    private MemberLoginHistoryRepository memberLoginHistoryRepository;
+
+    @Autowired
+    private AlarmRepository alarmRepository;
+
+    @Autowired
+    private DeleteMemberRepository deleteMemberRepository;
+
+    @Autowired
+    private FeedCommentRepository feedCommentRepository;
+
+    @Autowired
+    private IpAddressToCityName ipAddressToCityName;
+
+    /**
+     * 사용자 로그인
+     *
+     * @param login
+     * @return
+     */
+    @Override
+    public ResponseEntity&lt;Object&gt; signIn(Account login, HttpServletRequest request) throws IOException {
+<span class="nc bnc" id="L113" title="All 2 branches missed.">        if (login.getEmail() == null) {</span>
+<span class="nc" id="L114">            return ResultConstants.invalidRequest();</span>
+        }
+<span class="nc" id="L116">        login.setUserPwd(SHA256.getHash(login.getUserPwd()));</span>
+<span class="nc" id="L117">        Account user = accountRepository.findByEmailAndPassword(login);</span>
+<span class="nc bnc" id="L118" title="All 2 branches missed.">        if (user == null) {</span>
+<span class="nc" id="L119">            return ResponseEntityUtil.makeResultError(ErrorMessages.SYSTEM_DB_FIND_FAIL.getCode());</span>
+        }
+
+        //OS가 들어오는지 체크
+<span class="nc bnc" id="L123" title="All 14 branches missed.">        if (login.getDeviceType() == null || !login.getDeviceType().equals(&quot;AOS&quot;) &amp;&amp; !login.getDeviceType().equals(&quot;IOS&quot;) &amp;&amp; !login.getDeviceType().equals(&quot;WEB&quot;) &amp;&amp; !login.getDeviceType().equals(&quot;MOBILE(IOS)&quot;) &amp;&amp; !login.getDeviceType().equals(&quot;MOBILE(AOS)&quot;) &amp;&amp; !login.getDeviceType().equals(&quot;MOBILE(ETC)&quot;)) {</span>
+<span class="nc" id="L124">            return ResultConstants.invalidRequest();</span>
+        }
+
+        //deviceToken이 들어오는지 체크
+<span class="nc" id="L128">        user.setDeviceType(login.getDeviceType());</span>
+
+<span class="nc" id="L130">        MemberLoginHistory last = this.memberLoginHistoryRepository.findLastHistoryByMemberIdx(user.getUserIdx());</span>
+
+        //deviceToken update
+        // 사용자 로그인 히스토리 저장
+<span class="nc" id="L134">        MemberLoginHistory memberLoginHistory = new MemberLoginHistory();</span>
+<span class="nc" id="L135">        memberLoginHistory.setIp(CommonUtils.checkIp(request));</span>
+<span class="nc" id="L136">        memberLoginHistory.setLocation(this.ipAddressToCityName.callCityName(request));</span>
+<span class="nc" id="L137">        memberLoginHistory.setUIdx(user.getUserIdx());</span>
+<span class="nc" id="L138">        memberLoginHistory.setLoginType(login.getDeviceType());</span>
+<span class="nc" id="L139">        memberLoginHistory.setLogType(&quot;i&quot;);</span>
+
+<span class="nc" id="L141">        memberLoginHistoryRepository.saveLoginHistory(memberLoginHistory);</span>
+
+<span class="nc" id="L143">        String token = jwtService.makeAccessToken(user);</span>
+<span class="nc" id="L144">        LoginResponse loginResponse = this.makeResponse(user, token);</span>
+        //토큰 서버에 토큰 저장
+        //jwtService.setActiveToken(user.getMbrNo(),token);
+
+<span class="nc" id="L148">        loginResponse.setLastLogin(last);</span>
+
+<span class="nc" id="L150">        return ResponseEntityUtil.makeResultSuccess(loginResponse);</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;Object&gt; signInWithToken(LoginToken loginToken, HttpServletRequest request) throws IOException {
+        //parameter 검증
+<span class="nc bnc" id="L156" title="All 4 branches missed.">        if (loginToken.getAccessToken() == null || loginToken.getAccessToken().equals(&quot;&quot;)) {</span>
+<span class="nc" id="L157">            log.info(&quot;case01&quot;);</span>
+<span class="nc" id="L158">            return ResultConstants.invalidRequest();</span>
+        }
+
+        //클라이언트 토큰 검증
+<span class="nc" id="L162">        JwtValidationResult jwtValidationResult = jwtService.validateToken(loginToken.getAccessToken());</span>
+<span class="nc bnc" id="L163" title="All 2 branches missed.">        if (!jwtValidationResult.getIsValid()) {</span>
+<span class="nc" id="L164">            log.info(&quot;case1&quot;);</span>
+<span class="nc" id="L165">            return ResultConstants.loginFail();</span>
+        }
+
+        //토큰서버의 토큰존재 여부 체크
+<span class="nc" id="L169">        JwtClaim claim = jwtService.parseToken(loginToken.getAccessToken());</span>
+<span class="nc bnc" id="L170" title="All 2 branches missed.">        if (claim == null) {</span>
+<span class="nc" id="L171">            log.info(&quot;case2&quot;);</span>
+<span class="nc" id="L172">            return ResultConstants.loginFail();</span>
+        }
+
+        //DB정보 확인 및 토큰 갱신;
+<span class="nc" id="L176">        Account user = accountRepository.findByAccountIdx(Integer.parseInt(claim.getAidx()));</span>
+<span class="nc bnc" id="L177" title="All 2 branches missed.">        if (user == null) {</span>
+<span class="nc" id="L178">            log.info(&quot;case3&quot;);</span>
+<span class="nc" id="L179">            return ResultConstants.loginFail();</span>
+        }
+
+<span class="nc" id="L182">        Member member = this.memberRepository.findByIdx(Integer.parseInt(claim.getMidx()));</span>
+
+<span class="nc" id="L184">        int finded = this.memberLoginHistoryRepository.todayLoginChecker(member.getIdx());</span>
+
+<span class="nc bnc" id="L186" title="All 2 branches missed.">        if(finded == 0){</span>
+<span class="nc" id="L187">            MemberLoginHistory memberLoginHistory = new MemberLoginHistory();</span>
+<span class="nc" id="L188">            memberLoginHistory.setIp(CommonUtils.checkIp(request));</span>
+<span class="nc" id="L189">            memberLoginHistory.setLocation(this.ipAddressToCityName.callCityName(request));</span>
+<span class="nc" id="L190">            memberLoginHistory.setUIdx(user.getUserIdx());</span>
+<span class="nc" id="L191">            memberLoginHistory.setLoginType(claim.getDt());</span>
+<span class="nc" id="L192">            memberLoginHistory.setLogType(&quot;ti&quot;);</span>
+<span class="nc" id="L193">            memberLoginHistoryRepository.saveLoginHistory(memberLoginHistory);</span>
+        }
+
+        //토큰 생성
+<span class="nc" id="L197">        String token = jwtService.makeAccessToken(user);</span>
+        //액티브 토큰 저장
+        //jwtService.setActiveToken(claim.getUno(),token);
+//        int rtn = memberRepository.updateMemberLogin(user);
+//        log.info(&quot;rnt========&quot; + rtn);
+<span class="nc" id="L202">        return ResultConstants.checkResult(this.makeResponse(user, token));</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;Object&gt; signOut(LoginToken loginToken, HttpServletRequest request) throws IOException {
+        //parameter 검증
+<span class="nc bnc" id="L208" title="All 4 branches missed.">        if (loginToken.getAccessToken() == null || loginToken.getAccessToken().equals(&quot;&quot;)) {</span>
+<span class="nc" id="L209">            log.info(&quot;case01&quot;);</span>
+<span class="nc" id="L210">            return ResultConstants.invalidRequest();</span>
+        }
+
+        //클라이언트 토큰 검증
+<span class="nc" id="L214">        JwtValidationResult jwtValidationResult = jwtService.validateToken(loginToken.getAccessToken());</span>
+<span class="nc bnc" id="L215" title="All 2 branches missed.">        if (!jwtValidationResult.getIsValid()) {</span>
+<span class="nc" id="L216">            log.info(&quot;case1&quot;);</span>
+<span class="nc" id="L217">            return ResultConstants.loginFail();</span>
+        }
+
+        //토큰서버의 토큰존재 여부 체크
+<span class="nc" id="L221">        JwtClaim claim = jwtService.parseToken(loginToken.getAccessToken());</span>
+<span class="nc bnc" id="L222" title="All 2 branches missed.">        if (claim == null) {</span>
+<span class="nc" id="L223">            log.info(&quot;case2&quot;);</span>
+<span class="nc" id="L224">            return ResultConstants.loginFail();</span>
+        }
+<span class="nc" id="L226">        log.info(claim.getAidx() + &quot; : &quot;+claim.getAt() + &quot; : &quot;+claim.getDt() + &quot; : &quot;+claim.getMidx());</span>
+
+<span class="nc" id="L228">        Account user = accountRepository.findByAccountIdx(Integer.parseInt(claim.getAidx()));</span>
+<span class="nc bnc" id="L229" title="All 2 branches missed.">        if (user == null) {</span>
+<span class="nc" id="L230">            log.info(&quot;case3&quot;);</span>
+<span class="nc" id="L231">            return ResultConstants.loginFail();</span>
+        }
+
+<span class="nc" id="L234">        MemberLoginHistory memberLoginHistory = new MemberLoginHistory();</span>
+<span class="nc" id="L235">        memberLoginHistory.setIp(CommonUtils.checkIp(request));</span>
+<span class="nc" id="L236">        memberLoginHistory.setLocation(this.ipAddressToCityName.callCityName(request));</span>
+<span class="nc" id="L237">        memberLoginHistory.setUIdx(Integer.parseInt(claim.getMidx()));</span>
+<span class="nc" id="L238">        memberLoginHistory.setLoginType(claim.getDt());</span>
+<span class="nc" id="L239">        memberLoginHistory.setLogType(&quot;o&quot;);</span>
+
+<span class="nc" id="L241">        memberLoginHistoryRepository.saveLoginHistory(memberLoginHistory);</span>
+
+<span class="nc" id="L243">        return null;</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;Object&gt; saveMember(SignUpRequest signUpRequest, Locale locale, HttpServletRequest request) throws IOException, GeneralSecurityException, EncoderException {
+        //기회원 존재여부 확인
+        //MBR_STS_CD가 1인  MDN이 존재하는 지 여부 체크
+<span class="nc" id="L250">        signUpRequest.getAccount().setUserPwd(</span>
+<span class="nc" id="L251">                SHA256.getHash(signUpRequest.getAccount().getUserPwd())</span>
+        );
+<span class="nc" id="L253">        Account account = this.accountRepository.findByEmailAndPassword(signUpRequest.getAccount());</span>
+<span class="nc bnc" id="L254" title="All 2 branches missed.">        if (account != null) {</span>
+<span class="nc" id="L255">            return ResponseEntityUtil.makeResultError(ErrorMessages.COMMON_JOIN_DUPLICATION_FAIL.getCode());</span>
+        }
+
+<span class="nc" id="L258">        int rtn = this.memberRepository.checkNickName(signUpRequest.getMember());</span>
+<span class="nc bnc" id="L259" title="All 2 branches missed.">        if (rtn &gt; 0) {</span>
+<span class="nc" id="L260">            return ResponseEntityUtil.makeResultError(ErrorMessages.STOLEN_NICKNAME.getCode());</span>
+        }
+
+<span class="nc" id="L263">        this.memberRepository.saveMember(signUpRequest.getMember());</span>
+<span class="nc" id="L264">        signUpRequest.getAccount().setUserIdx(signUpRequest.getMember().getIdx());</span>
+<span class="nc" id="L265">        this.accountRepository.saveAccount(signUpRequest.getAccount());</span>
+<span class="nc" id="L266">        String token = jwtService.makeAccessToken(signUpRequest.getAccount());</span>
+
+        //액티브 토큰 저장
+        //jwtService.setActiveToken(member.getMbrNo(),token);
+<span class="nc" id="L270">        LoginResponse loginResponse = new LoginResponse();</span>
+<span class="nc" id="L271">        loginResponse.setAccessToken(token);</span>
+<span class="nc" id="L272">        loginResponse.setDeviceType(signUpRequest.getAccount().getDeviceType());</span>
+<span class="nc" id="L273">        loginResponse.setAccountType(signUpRequest.getAccount().getAccountType());</span>
+<span class="nc" id="L274">        loginResponse.setMIdx(signUpRequest.getMember().getIdx());</span>
+<span class="nc" id="L275">        loginResponse.setAIdx(signUpRequest.getAccount().getIdx());</span>
+
+<span class="nc" id="L277">        this.sendCertMailToUser(signUpRequest.getMember());</span>
+
+<span class="nc" id="L279">        MemberLoginHistory memberLoginHistory = new MemberLoginHistory();</span>
+<span class="nc" id="L280">        memberLoginHistory.setIp(CommonUtils.checkIp(request));</span>
+<span class="nc" id="L281">        memberLoginHistory.setLocation(this.ipAddressToCityName.callCityName(request));</span>
+<span class="nc" id="L282">        memberLoginHistory.setUIdx(signUpRequest.getMember().getIdx());</span>
+<span class="nc" id="L283">        memberLoginHistory.setLoginType(signUpRequest.getAccount().getDeviceType());</span>
+<span class="nc" id="L284">        memberLoginHistory.setLogType(&quot;i&quot;);</span>
+
+<span class="nc" id="L286">        memberLoginHistoryRepository.saveLoginHistory(memberLoginHistory);</span>
+
+        //TODO login history save
+
+<span class="nc" id="L290">        return ResultConstants.checkResult(loginResponse);</span>
+
+    }
+
+    private LoginResponse makeResponse(Account account, String token) {
+<span class="nc" id="L295">        MemberLoginHistory last = this.memberLoginHistoryRepository.findLastHistoryByMemberIdx(account.getUserIdx());</span>
+<span class="nc" id="L296">        LoginResponse loginResponse = new LoginResponse();</span>
+
+<span class="nc" id="L298">        loginResponse.setMIdx(account.getUserIdx());</span>
+<span class="nc" id="L299">        loginResponse.setAIdx(account.getIdx());</span>
+<span class="nc" id="L300">        loginResponse.setDeviceType(account.getDeviceType());</span>
+<span class="nc" id="L301">        loginResponse.setAccountType(account.getAccountType());</span>
+<span class="nc" id="L302">        loginResponse.setAccessToken(token);</span>
+<span class="nc" id="L303">        loginResponse.setLastLogin(last);</span>
+<span class="nc" id="L304">        return loginResponse;</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;Object&gt; checkNickName(Member member) {
+<span class="nc" id="L309">        Boolean checker = true;</span>
+<span class="nc" id="L310">        int rtn = this.memberRepository.checkNickName(member);</span>
+
+<span class="nc" id="L312">        HashMap&lt;String, Object&gt; result = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L313" title="All 2 branches missed.">        if (rtn &gt; 0) {</span>
+<span class="nc" id="L314">            checker = false;</span>
+        }
+<span class="nc" id="L316">        result.put(&quot;nickNameCheck&quot;, checker);</span>
+<span class="nc" id="L317">        return ResponseEntityUtil.makeResultSuccess(result);</span>
+    }
+
+    /**
+     * 회원 정보 로드시 사용 (idx만 사용)
+     * account[accountType==email]인거만 가져옴
+     *
+     * @param member
+     * @return
+     */
+    @Override
+    public ResponseEntity&lt;Object&gt; loadMemberProfile(Member member, HttpServletRequest request) throws IOException {
+<span class="nc" id="L329">        Map&lt;String, Object&gt; result = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L330">        Member member_buff = memberRepository.findByIdx(member.getIdx());</span>
+<span class="nc" id="L331">        Account account = accountRepository.findByUserIdx(member.getIdx());</span>
+<span class="nc" id="L332">        Files files = filesRepository.findByIdx(member_buff.getFileIdx());</span>
+<span class="nc" id="L333">        result.put(&quot;followingCount&quot;, memberFollowMemberRepository.countByOIdx(member.getIdx()));</span>
+<span class="nc" id="L334">        result.put(&quot;followerCount&quot;, memberFollowMemberRepository.countByTIdx(member.getIdx()));</span>
+<span class="nc" id="L335">        result.put(&quot;feedCount&quot;, feedsRepository.countByUidx(member.getIdx()));</span>
+<span class="nc" id="L336">        result.put(&quot;member&quot;, member_buff);</span>
+<span class="nc" id="L337">        result.put(&quot;account&quot;, account);</span>
+<span class="nc" id="L338">        result.put(&quot;files&quot;, files);</span>
+<span class="nc" id="L339">        result.put(&quot;locationText&quot;, this.ipAddressToCityName.callCityName(request));</span>
+<span class="nc" id="L340">        return ResponseEntityUtil.makeResultSuccess(result);</span>
+    }
+
+
+    /**
+     * 회원 프로필 수정 &amp; 비지니스 정보 수정
+     *
+     * @param member
+     * @return
+     */
+    @Override
+    public ResponseEntity&lt;Object&gt; modifyMemberProfile(MemberModifyObj member) {
+        /**
+         * 이미지 저장 로직 추가 - start
+         */
+<span class="nc" id="L355">        Files files = new Files();</span>
+
+<span class="nc bnc" id="L357" title="All 4 branches missed.">        if (!member.isDefaultImage() &amp;&amp; member.getUploadedFile() != null) {</span>
+<span class="nc" id="L358">            deleteBeforeProfileImage(member.getIdx());</span>
+<span class="nc" id="L359">            MultipartFile multipartFile = member.getUploadedFile();</span>
+            // 파일저장
+<span class="nc" id="L361">            String fileName = this.amazonClient.uploadFile(multipartFile, this.memberPath);</span>
+<span class="nc" id="L362">            String thumb = this.amazonClient.uploadFileThumbnail(multipartFile, this.memberThumbnailPath);</span>
+<span class="nc" id="L363">            String[] splits = multipartFile.getOriginalFilename().split(&quot;\\.&quot;);</span>
+
+
+<span class="nc" id="L366">            files.setFileName(fileName);</span>
+<span class="nc" id="L367">            files.setFileThumbnail(thumb);</span>
+<span class="nc" id="L368">            files.setFileType(splits[1]);</span>
+
+<span class="nc" id="L370">            this.filesRepository.saveFile(files);</span>
+<span class="nc" id="L371">            log.info(&quot;saved_file &quot; + files.getIdx());</span>
+<span class="nc" id="L372">            member.setFileIdx(files.getIdx());</span>
+<span class="nc" id="L373">        } else {</span>
+<span class="nc bnc" id="L374" title="All 2 branches missed.">            if (member.isDefaultImage()){</span>
+<span class="nc" id="L375">                deleteBeforeProfileImage(member.getIdx());</span>
+<span class="nc" id="L376">                member.setFileIdx(0);</span>
+            }
+        }
+        /**
+         * 이미지 저장 로직 추가 - end
+         */
+<span class="nc" id="L382">        int rtn = memberRepository.modifyMemberInfo(member);</span>
+<span class="nc" id="L383">        Map&lt;String, Object&gt; result = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L384" title="All 2 branches missed.">        if (rtn &gt; 0) {</span>
+<span class="nc" id="L385">            result.put(&quot;modifyMember&quot;, true);</span>
+        } else {
+<span class="nc" id="L387">            result.put(&quot;modifyMember&quot;, false);</span>
+        }
+
+<span class="nc" id="L390">        return ResponseEntityUtil.makeResultSuccess(result);</span>
+    }
+
+    private void deleteBeforeProfileImage(int idx) {
+<span class="nc" id="L394">        Member memberCheck = memberRepository.findByIdx(idx);</span>
+<span class="nc bnc" id="L395" title="All 2 branches missed.">        if (memberCheck.getFileIdx() &gt; 0) {</span>
+<span class="nc" id="L396">            Files beforeFiles = this.filesRepository.findByIdx(memberCheck.getFileIdx());</span>
+<span class="nc" id="L397">            this.amazonClient.deleteFileFromS3Bucket(beforeFiles.getFileName(), this.memberPath);</span>
+<span class="nc" id="L398">            this.amazonClient.deleteFileFromS3Bucket(beforeFiles.getFileThumbnail(), this.memberThumbnailPath);</span>
+<span class="nc" id="L399">            this.filesRepository.deleteByIdx(beforeFiles.getIdx());</span>
+        }
+<span class="nc" id="L401">    }</span>
+
+    @Override
+    public ResponseEntity&lt;Object&gt; saveMemberYear(Member member) {
+
+<span class="nc" id="L406">        int rtn = this.memberRepository.saveMemberYear(member);</span>
+
+<span class="nc" id="L408">        return ResponseEntityUtil.makeResultSuccess(&quot;&quot;);</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;Object&gt; getAdminCheckUsers() {
+<span class="nc" id="L413">        List&lt;SuggestMember&gt; adminCheckUser = this.memberRepository.findByAdminCheckYn();</span>
+<span class="nc" id="L414">        return ResponseEntityUtil.makeResultSuccess(adminCheckUser);</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;Object&gt; getASuggestUsers(List&lt;Integer&gt; users) {
+<span class="nc" id="L419">        List&lt;SuggestMember&gt; getSuggestUsers = this.memberRepository.findBySuggestUserIdxs(users);</span>
+<span class="nc" id="L420">        return ResponseEntityUtil.makeResultSuccess(getSuggestUsers);</span>
+    }
+
+    @Override
+    public void changeUserMailCert(String encrypt) throws GeneralSecurityException, UnsupportedEncodingException, DecoderException {
+<span class="nc" id="L425">        AES256Util aes256Util = new AES256Util(&quot;avansoft-dev-lab&quot;);</span>
+<span class="nc" id="L426">        URLCodec codec = new URLCodec();</span>
+<span class="nc" id="L427">        log.info(&quot;encrypt===&quot; + encrypt);</span>
+<span class="nc" id="L428">        String data = codec.decode(encrypt);</span>
+<span class="nc" id="L429">        log.info(&quot;data===&quot; + data);</span>
+<span class="nc" id="L430">        String change1 = aes256Util.decrypt(data);</span>
+<span class="nc" id="L431">        log.info(&quot;change1===&quot; + change1);</span>
+<span class="nc" id="L432">        String change2 = change1.replaceAll(&quot; &quot;, &quot;&quot;);</span>
+<span class="nc" id="L433">        log.info(&quot;change2===&quot; + change2);</span>
+
+<span class="nc" id="L435">        int memberIdx = Integer.parseInt(change2);</span>
+<span class="nc" id="L436">        this.memberRepository.changeCertMail(memberIdx);</span>
+
+
+<span class="nc" id="L439">    }</span>
+
+    @Override
+    public ResponseEntity&lt;Object&gt; sendCertMailToUser(Member find) throws UnsupportedEncodingException, GeneralSecurityException, EncoderException {
+<span class="nc" id="L443">        Member member = this.memberRepository.findByIdx(find.getIdx());</span>
+<span class="nc" id="L444">        Account account = this.accountRepository.findByUserIdx(member.getIdx());</span>
+
+
+<span class="nc" id="L447">        MailDto mailDto = new MailDto();</span>
+<span class="nc" id="L448">        List&lt;String&gt; to = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L449">        to.add(account.getEmail());</span>
+
+<span class="nc" id="L451">        mailDto.setTo(to);</span>
+<span class="nc" id="L452">        mailDto.setFrom(this.mailAdmin);</span>
+<span class="nc" id="L453">        mailDto.setSubject(this.sendMailService.titleVerify());</span>
+<span class="nc" id="L454">        mailDto.setHtmlBody(this.sendMailService.contentVerification(member));</span>
+<span class="nc" id="L455">        mailDto.setContent(&quot;VORA의 계정 인증 메일입니다.&quot;);</span>
+
+<span class="nc" id="L457">        Boolean checker = this.sendMailService.send(mailDto);</span>
+<span class="nc bnc" id="L458" title="All 2 branches missed.">        if (checker) {</span>
+<span class="nc" id="L459">            return ResponseEntityUtil.makeResultSuccess(&quot;&quot;);</span>
+        } else {
+<span class="nc" id="L461">            return ResponseEntityUtil.makeResultError(&quot;&quot;);</span>
+        }
+
+    }
+
+    @Override
+    public ResponseEntity&lt;Object&gt; sendTempPwd(Account find, HttpServletRequest request) throws UnsupportedEncodingException, GeneralSecurityException, EncoderException {
+<span class="nc" id="L468">        Account account = this.accountRepository.findByEmail(find.getEmail());</span>
+<span class="nc" id="L469">        Member member = this.memberRepository.findByIdx(account.getUserIdx());</span>
+<span class="nc" id="L470">        String tempPassword = &quot;&quot;;</span>
+
+<span class="nc" id="L472">        int pwdLength = 16;</span>
+<span class="nc" id="L473">        final char[] passwordTable = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',</span>
+                'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
+                'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+                'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+                'w', 'x', 'y', 'z', '!', '@', '#', '$', '%', '^', '&amp;', '*',
+                '(', ')', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'};
+
+<span class="nc" id="L480">        Random random = new Random(System.currentTimeMillis());</span>
+<span class="nc" id="L481">        int tablelength = passwordTable.length;</span>
+<span class="nc" id="L482">        StringBuffer buf = new StringBuffer();</span>
+
+<span class="nc bnc" id="L484" title="All 2 branches missed.">        for (int i = 0; i &lt; pwdLength; i++) {</span>
+<span class="nc" id="L485">            buf.append(passwordTable[random.nextInt(tablelength)]);</span>
+        }
+<span class="nc" id="L487">        tempPassword = buf.toString();</span>
+
+<span class="nc" id="L489">        account.setUserPwd(SHA256.getHash(tempPassword));</span>
+<span class="nc" id="L490">        accountRepository.updateAccountPwd(account);</span>
+
+<span class="nc" id="L492">        MailDto mailDto = new MailDto();</span>
+<span class="nc" id="L493">        List&lt;String&gt; to = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L494">        to.add(account.getEmail());</span>
+
+<span class="nc" id="L496">        mailDto.setTo(to);</span>
+<span class="nc" id="L497">        mailDto.setFrom(this.mailAdmin);</span>
+<span class="nc" id="L498">        mailDto.setSubject(this.sendMailService.titlePassword());</span>
+<span class="nc" id="L499">        mailDto.setHtmlBody(this.sendMailService.changePwdMail(member, tempPassword));</span>
+<span class="nc" id="L500">        mailDto.setContent(&quot;VORA의 계정 인증 메일입니다.&quot;);</span>
+
+<span class="nc" id="L502">        Boolean checker = this.sendMailService.send(mailDto);</span>
+<span class="nc bnc" id="L503" title="All 2 branches missed.">        if (checker) {</span>
+
+<span class="nc" id="L505">            MemberActivity memberActivity = new MemberActivity();</span>
+<span class="nc" id="L506">            memberActivity.setActivityComment(&quot;임시 비밀번호 요청&quot;);</span>
+<span class="nc" id="L507">            memberActivity.setActivityType(&quot;Temp&quot;);</span>
+<span class="nc" id="L508">            String userIp = CommonUtils.checkIp(request);</span>
+<span class="nc" id="L509">            memberActivity.setIp(userIp);</span>
+<span class="nc" id="L510">            memberActivity.setMemberIdx(account.getUserIdx());</span>
+
+<span class="nc" id="L512">            this.memberActivityRepository.saveActivity(memberActivity);</span>
+
+
+<span class="nc" id="L515">            return ResponseEntityUtil.makeResultSuccess(&quot;&quot;);</span>
+        } else {
+<span class="nc" id="L517">            return ResponseEntityUtil.makeResultError(&quot;&quot;);</span>
+        }
+    }
+
+    @Override
+    public ResponseEntity&lt;Object&gt; checkUserEmail(Account member) {
+<span class="nc" id="L523">        Account account = this.accountRepository.findByEmail(member.getEmail());</span>
+<span class="nc bnc" id="L524" title="All 2 branches missed.">        if (account != null) {</span>
+<span class="nc" id="L525">            return ResponseEntityUtil.makeResultSuccess(&quot;&quot;);</span>
+        } else {
+<span class="nc" id="L527">            return ResponseEntityUtil.makeResultError(ErrorMessages.NOT_JOINDED_USER.getCode());</span>
+        }
+    }
+
+    @Override
+    public void changeUserStatusMail(String encrypt) throws DecoderException, UnsupportedEncodingException, GeneralSecurityException {
+<span class="nc" id="L533">        AES256Util aes256Util = new AES256Util(&quot;avansoft-dev-lab&quot;);</span>
+<span class="nc" id="L534">        URLCodec codec = new URLCodec();</span>
+<span class="nc" id="L535">        log.info(&quot;encrypt===&quot; + encrypt);</span>
+<span class="nc" id="L536">        String data = codec.decode(encrypt);</span>
+<span class="nc" id="L537">        log.info(&quot;data===&quot; + data);</span>
+<span class="nc" id="L538">        String change1 = aes256Util.decrypt(data);</span>
+<span class="nc" id="L539">        log.info(&quot;change1===&quot; + change1);</span>
+<span class="nc" id="L540">        String change2 = change1.replaceAll(&quot; &quot;, &quot;&quot;);</span>
+<span class="nc" id="L541">        log.info(&quot;change2===&quot; + change2);</span>
+
+<span class="nc" id="L543">        int memberIdx = Integer.parseInt(change2);</span>
+<span class="nc" id="L544">        this.memberRepository.changeUserStatus(memberIdx);</span>
+<span class="nc" id="L545">    }</span>
+
+    @Override
+    public ResponseEntity&lt;Object&gt; memberExit(Member member) {
+<span class="nc" id="L549">        Member find = this.memberRepository.findByIdx(member.getIdx());</span>
+
+<span class="nc" id="L551">        List&lt;Feeds&gt; feedImageDelList = this.feedsRepository.findByMemberIdx(find);</span>
+
+<span class="nc bnc" id="L553" title="All 2 branches missed.">        for(Feeds feeds : feedImageDelList){</span>
+<span class="nc" id="L554">            List&lt;Files&gt; getFiles = this.filesRepository.findByFeedIdx(feeds.getIdx());</span>
+
+<span class="nc bnc" id="L556" title="All 2 branches missed.">            for(Files files : getFiles){</span>
+<span class="nc" id="L557">                this.amazonClient.deleteFileFromS3Bucket(files.getFileName(), feedPath);</span>
+<span class="nc" id="L558">                this.amazonClient.deleteFileFromS3Bucket(files.getFileThumbnail(), feedThumbnailPath);</span>
+<span class="nc" id="L559">            }</span>
+<span class="nc" id="L560">        }</span>
+
+        // 타 사용자의 피드에 내가 언급된 내용 변경처리
+<span class="nc" id="L563">        HashMap&lt;String, Object&gt; changeMemberTags = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L564">        String findtag = &quot;ꊞ&quot;;</span>
+<span class="nc" id="L565">        String changetag = &quot;@&quot;;</span>
+<span class="nc" id="L566">        changeMemberTags.put(&quot;findtag&quot;,findtag + member.getIdx());</span>
+<span class="nc" id="L567">        changeMemberTags.put(&quot;changeNick&quot;, changetag + find.getNickName());</span>
+
+<span class="nc" id="L569">        this.feedsRepository.updateDelMemberChange(changeMemberTags);</span>
+<span class="nc" id="L570">        this.feedCommentRepository.updateDelMemberChange(changeMemberTags);</span>
+
+
+
+<span class="nc" id="L574">        Files members = this.filesRepository.findByIdx(find.getFileIdx());</span>
+<span class="nc bnc" id="L575" title="All 2 branches missed.">        if(member.getFileIdx() != 0){</span>
+<span class="nc" id="L576">            this.amazonClient.deleteFileFromS3Bucket(members.getFileName(), feedPath);</span>
+<span class="nc" id="L577">            this.amazonClient.deleteFileFromS3Bucket(members.getFileThumbnail(), feedThumbnailPath);</span>
+        }
+
+
+<span class="nc" id="L581">        DeleteMember deleteMember = new DeleteMember();</span>
+<span class="nc" id="L582">        BeanUtils.copyProperties(find, deleteMember);</span>
+<span class="nc" id="L583">        this.deleteMemberRepository.insertDeleteMember(deleteMember);</span>
+
+<span class="nc" id="L585">        this.memberRepository.exitMember(member);</span>
+
+<span class="nc" id="L587">        return ResponseEntityUtil.makeResultSuccess(&quot;&quot;);</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;Object&gt; checkDuplicateEmail(Account member) {
+<span class="nc" id="L592">        HashMap&lt;String, Object&gt; check = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L593">        int find = this.accountRepository.checkDuplicateMail(member);</span>
+
+<span class="nc bnc" id="L595" title="All 2 branches missed.">        if(find &gt; 0){</span>
+<span class="nc" id="L596">            check.put(&quot;mailCheck&quot;, false);</span>
+        }else{
+<span class="nc" id="L598">            check.put(&quot;mailCheck&quot;, true);</span>
+        }
+
+
+<span class="nc" id="L602">        return ResponseEntityUtil.makeResultSuccess(check);</span>
+    }
+
+    private void saveAlarm(Alarm alarm) {
+<span class="nc" id="L606">        this.alarmRepository.save(alarm);</span>
+<span class="nc" id="L607">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,0 +1,20 @@
+{
+  "presets": [
+    ["env", {
+      "modules": false,
+      "targets": {
+        "browsers": ["> 1%", "last 2 versions", "not ie <= 8"],
+        "esmodules":true
+      },
+      "useBuiltIns": "entry",
+    }],
+    "stage-2"
+  ],
+  "plugins": ["transform-vue-jsx", "istanbul","transform-remove-strict-mode", "syntax-jsx", "transform-runtime",["transform-es2015-modules-commonjs",{"strict":false}],"syntax-dynamic-import"],
+  "env": {
+    "test": {
+      "presets": ["env", "stage-2"],
+      "plugins": ["transform-vue-jsx", "istanbul","transform-remove-strict-mode", "syntax-jsx", "transform-runtime",["transform-es2015-modules-commonjs",{"strict":false}],"syntax-dynamic-import"]
+    }
+  }
+}

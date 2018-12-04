@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DatabaseConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">backend</a> &gt; <a href="index.source.html" class="el_package">kr.co.kyobo.vora.config</a> &gt; <span class="el_source">DatabaseConfig.java</span></div><h1>DatabaseConfig.java</h1><pre class="source lang-java linenums">package kr.co.kyobo.vora.config;
+
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.mybatis.spring.SqlSessionFactoryBean;
+import org.mybatis.spring.annotation.MapperScan;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
+
+import javax.sql.DataSource;
+import java.sql.SQLException;
+
+<span class="nc" id="L18">@Slf4j</span>
+@Configuration
+@MapperScan(basePackages = &quot;kr.co.kyobo.vora.repository&quot;)
+<span class="nc" id="L21">public class DatabaseConfig {</span>
+    @Value(&quot;${driverClassName}&quot;)
+    String driver;
+    @Value(&quot;${jdbcUrl}&quot;)
+    String url;
+    @Value(&quot;${db.username}&quot;)
+    String username;
+    @Value(&quot;${db.password}&quot;)
+    String pass;
+    @Value(&quot;${maximum-pool-size}&quot;)
+    int max;
+    @Value(&quot;${connection-timeout}&quot;)
+    int timeout;
+    @Value(&quot;${auto-commit}&quot;)
+    Boolean autocommit;
+
+    @Bean
+    public HikariConfig hikariConfig(){
+<span class="nc" id="L39">        HikariConfig hikariConfig = new HikariConfig();</span>
+
+<span class="nc" id="L41">        hikariConfig.setDriverClassName(driver);</span>
+<span class="nc" id="L42">        hikariConfig.setAutoCommit(autocommit);</span>
+<span class="nc" id="L43">        hikariConfig.setJdbcUrl(url);</span>
+<span class="nc" id="L44">        hikariConfig.setUsername(username);</span>
+<span class="nc" id="L45">        hikariConfig.setPassword(pass);</span>
+<span class="nc" id="L46">        hikariConfig.setMaximumPoolSize(max);</span>
+<span class="nc" id="L47">        hikariConfig.setConnectionTimeout(timeout);</span>
+
+<span class="nc" id="L49">        return hikariConfig;</span>
+    }
+
+
+    @Bean
+    public DataSource dataSource() throws SQLException {
+<span class="nc" id="L55">        return new HikariDataSource(this.hikariConfig());</span>
+    }
+
+    @Bean
+    public PlatformTransactionManager transactionManager() throws SQLException {
+<span class="nc" id="L60">        return new DataSourceTransactionManager(this.dataSource());</span>
+    }
+
+    @Bean
+    public SqlSessionFactory sqlSessionFactory() throws Exception {
+<span class="nc" id="L65">        SqlSessionFactoryBean bean = new SqlSessionFactoryBean();</span>
+<span class="nc" id="L66">        bean.setDataSource(this.dataSource());</span>
+
+<span class="nc" id="L68">        bean.getObject().getConfiguration().setMapUnderscoreToCamelCase(true);</span>
+
+<span class="nc" id="L70">        return bean.getObject();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

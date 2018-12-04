@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SearchHistoryServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">backend</a> &gt; <a href="index.source.html" class="el_package">kr.co.kyobo.vora.service.searchHistory</a> &gt; <span class="el_source">SearchHistoryServiceImpl.java</span></div><h1>SearchHistoryServiceImpl.java</h1><pre class="source lang-java linenums">package kr.co.kyobo.vora.service.searchHistory;
+
+import kr.co.kyobo.vora.common.CommonUtils;
+import kr.co.kyobo.vora.messages.ErrorMessages;
+import kr.co.kyobo.vora.model.api.ResponseEntityUtil;
+import kr.co.kyobo.vora.model.database.*;
+import kr.co.kyobo.vora.model.vo.*;
+import kr.co.kyobo.vora.repository.*;
+import kr.co.kyobo.vora.service.feeds.FeedsService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+<span class="nc" id="L23">@Slf4j</span>
+@Service
+@Transactional
+<span class="nc" id="L26">public class SearchHistoryServiceImpl implements SearchHistoryService {</span>
+    @Autowired
+    private SearchHistoryRepository searchHistoryRepository;
+
+    @Override
+    public ResponseEntity&lt;Object&gt; getSearchHistory(Member member) {
+<span class="nc" id="L32">        List&lt;SearchHistory&gt; historyList = searchHistoryRepository.findByUidx(member.getIdx());</span>
+<span class="nc" id="L33">        List&lt;PopularSearchKey&gt; keys = searchHistoryRepository.findPopularSearchKey();</span>
+<span class="nc" id="L34">        RtnSearchHistory rtn = new RtnSearchHistory();</span>
+<span class="nc" id="L35">        rtn.setPopularSearchList(keys);</span>
+<span class="nc" id="L36">        rtn.setSearchHistoryList(historyList);</span>
+<span class="nc" id="L37">        return ResponseEntityUtil.makeResultSuccess(rtn);</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;Object&gt; saveSearchHistory(SearchHistory searchHistory, HttpServletRequest request) {
+<span class="nc" id="L42">        searchHistory.setIp(CommonUtils.checkIp(request));</span>
+<span class="nc" id="L43">        int rts = searchHistoryRepository.saveQueryHistory(searchHistory);</span>
+<span class="nc bnc" id="L44" title="All 2 branches missed.">        if(rts != 0)</span>
+<span class="nc" id="L45">            return ResponseEntityUtil.makeResultSuccess(&quot;&quot;);</span>
+        else
+<span class="nc" id="L47">            return ResponseEntityUtil.makeResultError(ErrorMessages.SYSTEM_DB_INSERT_FAIL.getMessage());</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;Object&gt; deleteAllSearchHistory(SearchHistory searchHistory) {
+<span class="nc" id="L52">        int rts = searchHistoryRepository.deleteAllQueryHistory(searchHistory);</span>
+<span class="nc bnc" id="L53" title="All 2 branches missed.">        if(rts != 0)</span>
+<span class="nc" id="L54">            return ResponseEntityUtil.makeResultSuccess(&quot;&quot;);</span>
+        else
+<span class="nc" id="L56">            return ResponseEntityUtil.makeResultError(ErrorMessages.SYSTEM_DB_UPDATE_FAIL.getMessage());</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;Object&gt; deleteSearchHistory(SearchHistory searchHistory) {
+<span class="nc" id="L61">        int rts = searchHistoryRepository.deleteQueryHistory(searchHistory);</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">        if(rts != 0)</span>
+<span class="nc" id="L63">            return ResponseEntityUtil.makeResultSuccess(&quot;&quot;);</span>
+        else
+<span class="nc" id="L65">            return ResponseEntityUtil.makeResultError(ErrorMessages.SYSTEM_DB_UPDATE_FAIL.getMessage());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

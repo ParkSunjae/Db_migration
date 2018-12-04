@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>KyoboApplication.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">deactive_member</a> &gt; <a href="index.source.html" class="el_package">kr.co.kyobo.vora</a> &gt; <span class="el_source">KyoboApplication.java</span></div><h1>KyoboApplication.java</h1><pre class="source lang-java linenums">package kr.co.kyobo.vora;
+
+import kr.co.kyobo.vora.service.member.MemberService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+<span class="nc" id="L10">@Slf4j</span>
+@SpringBootApplication
+<span class="nc" id="L12">public class KyoboApplication implements CommandLineRunner {</span>
+
+    @Autowired
+    private MemberService memberService;
+
+    public static void main(String[] args) {
+<span class="nc" id="L18">        log.info(&quot;Starting to run...&quot;);</span>
+<span class="nc" id="L19">        SpringApplication.run(KyoboApplication.class, args);</span>
+<span class="nc" id="L20">        log.info(&quot;Completed the run...&quot;);</span>
+
+<span class="nc" id="L22">    }</span>
+
+    @Override
+    public void run(String... args) throws Exception {
+<span class="nc bnc" id="L26" title="All 2 branches missed.">        if (args.length &lt; 1) {</span>
+<span class="nc" id="L27">            throw new IllegalArgumentException(&quot;no args given&quot;);</span>
+        }
+<span class="nc bnc" id="L29" title="All 2 branches missed.">        if(args[0].equals(&quot;call&quot;)){</span>
+<span class="nc" id="L30">            this.memberService.checkUserStatus();</span>
+        }
+<span class="nc" id="L32">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

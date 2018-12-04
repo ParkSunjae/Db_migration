@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SendMailServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">backend</a> &gt; <a href="index.source.html" class="el_package">kr.co.kyobo.vora.service.mail</a> &gt; <span class="el_source">SendMailServiceImpl.java</span></div><h1>SendMailServiceImpl.java</h1><pre class="source lang-java linenums">package kr.co.kyobo.vora.service.mail;
+
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
+import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder;
+import com.amazonaws.services.simpleemail.model.*;
+import kr.co.kyobo.vora.common.api.UriEntity;
+import kr.co.kyobo.vora.common.api.UriMethod;
+import kr.co.kyobo.vora.common.api.UriVersion;
+import kr.co.kyobo.vora.common.encrypt.AES256Util;
+import kr.co.kyobo.vora.model.api.MailDto;
+import kr.co.kyobo.vora.model.database.Member;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.EncoderException;
+import org.apache.commons.codec.net.URLCodec;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.security.GeneralSecurityException;
+
+<span class="nc" id="L25">@Slf4j</span>
+@Service
+<span class="nc" id="L27">public class SendMailServiceImpl implements SendMailService {</span>
+
+    static final private String CONFIGSET = &quot;ConfigSet&quot;;
+    static final String TEXTBODY = &quot;This email was sent through Amazon SES using the AWS SDK for Java.&quot;;
+
+    @Value(&quot;${aws.bucket}&quot;)
+    String bucket;
+
+    @Value(&quot;${mail.image.path}&quot;)
+    String mail;
+
+    @Value(&quot;${aws.ses.accesskey}&quot;)
+    private String accessKey;
+
+    @Value(&quot;${aws.ses.secretkey}&quot;)
+    private String secretKey;
+
+    @Value(&quot;${base.mail.cert.uri.backend}&quot;)
+    private String backendUri;
+
+    @Value(&quot;${base.mail.cert.uri.frontend}&quot;)
+    private String frontendUri;
+
+    @Override
+    public Boolean send(MailDto mailDto) {
+        try {
+<span class="nc" id="L53">            BasicAWSCredentials creds = new BasicAWSCredentials(this.accessKey, this.secretKey);</span>
+            AmazonSimpleEmailService client =
+<span class="nc" id="L55">                    AmazonSimpleEmailServiceClientBuilder.standard().withCredentials(new AWSStaticCredentialsProvider(creds))</span>
+                            // Replace US_WEST_2 with the AWS Region you're using for
+                            // Amazon SES.
+<span class="nc" id="L58">                            .withRegion(Regions.US_WEST_2)</span>
+<span class="nc" id="L59">                            .build();</span>
+<span class="nc" id="L60">            SendEmailRequest request = new SendEmailRequest()</span>
+<span class="nc" id="L61">                    .withDestination(new Destination().withToAddresses(mailDto.getTo()))</span>
+<span class="nc" id="L62">                    .withMessage(new Message().withBody(new Body().withHtml(new Content().withCharset(&quot;UTF-8&quot;).withData(mailDto.getHtmlBody()))</span>
+<span class="nc" id="L63">                                    .withText(new Content().withCharset(&quot;UTF-8&quot;).withData(TEXTBODY)))</span>
+<span class="nc" id="L64">                            .withSubject(new Content().withCharset(&quot;UTF-8&quot;).withData(mailDto.getSubject()))).withSource(mailDto.getFrom());</span>
+                    // Comment or remove the next line if you are not using a
+                    // configuration set
+//                    .withConfigurationSetName(CONFIGSET);
+<span class="nc" id="L68">            client.sendEmail(request);</span>
+<span class="nc" id="L69">            log.info(&quot;Email sent!&quot;);</span>
+<span class="nc" id="L70">            return true;</span>
+<span class="nc" id="L71">        } catch (Exception ex) {</span>
+<span class="nc" id="L72">            log.info(&quot;The email was not sent. Error message: &quot;+ ex.getMessage());</span>
+<span class="nc" id="L73">            return false;</span>
+        }
+    }
+
+    @Override
+    public String titleVerify() {
+<span class="nc" id="L79">        return &quot;VORA와 함께하게 된 것을 환영해요!&quot;;</span>
+    }
+
+    @Override
+    public String titlePassword() {
+<span class="nc" id="L84">        return &quot;비밀번호를 변경해주세요&quot;;</span>
+    }
+
+    @Override
+    public String titleDeActive() {
+<span class="nc" id="L89">        return &quot;휴면회원 안내 메일입니다&quot;;</span>
+    }
+
+    @Override
+    public String titleInAvtice() {
+<span class="nc" id="L94">        return &quot;휴면상태 해지를 위해 본인 확인 메일을 보내드립니다.&quot;;</span>
+    }
+
+    @Override
+    public String contentVerification(Member member) throws GeneralSecurityException, UnsupportedEncodingException, EncoderException {
+
+<span class="nc" id="L100">        int memberIdx = member.getIdx();</span>
+<span class="nc" id="L101">        String encriypt = this.makeSixTeenCharacters(memberIdx);</span>
+<span class="nc" id="L102">        URLCodec codec = new URLCodec();</span>
+
+<span class="nc" id="L104">        String mailDir = bucket + File.separator + mail;</span>
+
+
+<span class="nc" id="L107">        String certUrls = backendUri + UriVersion.API_VERSION_PUBLIC + UriEntity.MAIL + UriMethod.MAIL_VERIFICATION;</span>
+<span class="nc" id="L108">        return &quot;\n&quot; +</span>
+                &quot;&lt;!DOCTYPE html&gt;\n&quot; +
+                &quot;&lt;html lang=\&quot;ko\&quot;&gt;\n&quot; +
+                &quot;&lt;head&gt;\n&quot; +
+                &quot;&lt;meta charset=\&quot;UTF-8\&quot;&gt;\n&quot; +
+                &quot;&lt;meta name=\&quot;viewport\&quot; content=\&quot;width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no\&quot; /&gt;\n&quot; +
+                &quot;&lt;title&gt;교보문고&lt;/title&gt;\n&quot; +
+                &quot;&lt;style&gt;\n&quot; +
+                &quot;\t@charset \&quot;utf-8\&quot;;\n&quot; +
+                &quot;\t@import url('https://fonts.googleapis.com/css?family=Noto+Sans');\n&quot; +
+                &quot;&lt;/style&gt;\n&quot; +
+                &quot;&lt;/head&gt;\n&quot; +
+                &quot;&lt;body style=\&quot;margin: 0; padding: 0;\&quot;&gt;\n&quot; +
+                &quot;\t&lt;div style=\&quot;width: 700px; margin: 0 auto; background-color: #f2f2f4\&quot; align=\&quot;center\&quot;&gt;\n&quot; +
+                &quot;\t\t&lt;div style=\&quot;width: 550px; margin: 0 auto; padding: 190px 0; text-align: center;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t&lt;strong style=\&quot;display: block; margin-bottom: 47px;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;img src=\&quot;https://s3.ap-northeast-2.amazonaws.com/&quot;+mailDir+&quot;/login_logo.png\&quot; alt=\&quot;vora로고\&quot; style=\&quot;vertical-align: top; cursor: pointer\&quot; /&gt;\n&quot; +
+                &quot;\t\t\t&lt;/strong&gt;\n&quot; +
+                &quot;\t\t\t&lt;p style=\&quot;margin: 0; font-family: 'Noto Sans', 'sans-serif'; font-size: 21px; font-weight: 500; color: #333;\&quot;&gt;VORA와 함께하게 된 것을 환영해요!&lt;/p&gt;\n&quot; +
+<span class="nc" id="L127">                &quot;\t\t\t&lt;p style=\&quot;line-height: 24px; margin: 20px 0 0 0; font-family: 'Noto Sans', 'sans-serif'; font-size: 16px; font-weight: normal; color: #333;\&quot;&gt;안녕하세요 &lt;span style=\&quot;font-size: 18px; font-weight: 500;\&quot;&gt;&quot; + member.getNickName() + &quot;&lt;/span&gt;님&lt;br&gt;\n&quot; +</span>
+                &quot;\t\t\tVORA의 모든 서비스를 자유롭게 사용하기 위해&lt;br&gt;\n&quot; +
+                &quot;\t\t\t아래 버튼을 클릭하여 이메일 인증을 진행해주세요&lt;/p&gt;\n&quot; +
+                &quot;\n&quot; +
+                &quot;\t\t\t&lt;form action=\&quot;&quot;+certUrls+&quot;\&quot; method=\&quot;post\&quot;&gt;\n&quot; +
+<span class="nc" id="L132">                &quot;\t\t\t&lt;input type=\&quot;hidden\&quot; name=\&quot;encrypt\&quot; value=\&quot;&quot;+codec.encode(encriypt)+&quot;\&quot;&gt;\n&quot; +</span>
+                &quot;\t\t\t&lt;button type=\&quot;submit\&quot; style=\&quot;position: relative; display: block; width: 400px; margin: 50px auto 0; text-decoration: none;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;img src=\&quot;https://s3.ap-northeast-2.amazonaws.com/&quot;+mailDir+&quot;/btn_mail01.png\&quot; alt=\&quot;VORA 시작하기\&quot; style=\&quot;border: 0; vertical-align: top;\&quot; /&gt;\n&quot; +
+                &quot;\t\t\t&lt;/button&gt;\n&quot; +
+                &quot;\t\t\t&lt;/form&gt;\n&quot; +
+                &quot;\t\t\t&lt;div style=\&quot;margin-top:57px;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;p style=\&quot;margin: 0; font-family: 'Noto Sans', 'sans-serif'; font-size:12px; color:#c7c7c7;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t\t&lt;a href=\&quot;#\&quot; style=\&quot;color: #c7c7c7; text-decoration:none; \&quot;&gt;VORA소개&lt;/a&gt; · \n&quot; +
+                &quot;\t\t\t\t\t&lt;a href=\&quot;#\&quot; style=\&quot;color: #c7c7c7; text-decoration:none; \&quot;&gt;개인정보처리방침&lt;/a&gt; · \n&quot; +
+                &quot;\t\t\t\t\t&lt;a href=\&quot;#\&quot; style=\&quot;color: #c7c7c7; text-decoration:none; \&quot;&gt;이용약관&lt;/a&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;/p&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;p style=\&quot;margin-bottom:17px; font-family: 'Noto Sans', 'sans-serif'; font-size:12px; color:#c7c7c7;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t\t&lt;a href=\&quot;#\&quot; style=\&quot;color: #c7c7c7; text-decoration:none; \&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t\t\t&lt;img src=\&quot;https://s3.ap-northeast-2.amazonaws.com/&quot;+mailDir+&quot;/iphone_icon.png\&quot; alt=\&quot;\&quot; style=\&quot;margin-right: 5px; border: 0; vertical-align: top;\&quot;/&gt;\n&quot; +
+                &quot;\t\t\t\t\t\tiPhone 앱\n&quot; +
+                &quot;\t\t\t\t\t&lt;/a&gt;\n&quot; +
+                &quot;\t\t\t\t\t&lt;a href=\&quot;#\&quot; style=\&quot;padding-left:17px; text-decoration:none; color: #c7c7c7;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t\t\t&lt;img src=\&quot;https://s3.ap-northeast-2.amazonaws.com/&quot;+mailDir+&quot;/android_icon.png\&quot; alt=\&quot;\&quot; style=\&quot;margin-right: 5px; border: 0; vertical-align: top;\&quot;/&gt;\n&quot; +
+                &quot;\t\t\t\t\t\tAndroid 앱\n&quot; +
+                &quot;\t\t\t\t\t&lt;/a&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;/p&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;p style=\&quot;font-family: 'Noto Sans', 'sans-serif'; font-size: 12px; color: #c7c7c7\&quot;&gt;Copyright @ KYOBO BOOK CENTRE.&lt;/p&gt;\n&quot; +
+                &quot;\t\t\t&lt;/div&gt;\n&quot; +
+                &quot;\t\t&lt;/div&gt;\n&quot; +
+                &quot;\t&lt;/div&gt;\n&quot; +
+                &quot;&lt;/body&gt;\n&quot; +
+                &quot;&lt;/html&gt;\n&quot;;
+    }
+
+    private String makeSixTeenCharacters(int idx) throws GeneralSecurityException, UnsupportedEncodingException {
+
+<span class="nc" id="L163">        String original = idx + &quot;&quot;;</span>
+
+<span class="nc bnc" id="L165" title="All 2 branches missed.">        if(original.length() &lt; 16){</span>
+<span class="nc" id="L166">            int cnt = 16 - original.length();</span>
+<span class="nc bnc" id="L167" title="All 2 branches missed.">            for(int i=0; i&lt;cnt; i++){</span>
+<span class="nc" id="L168">                original = original + &quot; &quot;;</span>
+            }
+        }
+
+<span class="nc" id="L172">        AES256Util aes256Util = new AES256Util(&quot;avansoft-dev-lab&quot;);</span>
+<span class="nc" id="L173">        String enc = aes256Util.encrypt(original);</span>
+<span class="nc" id="L174">        return enc;</span>
+    }
+
+    @Override
+    public String changePwdMail(Member member, String password) {
+<span class="nc" id="L179">        String mailDir = bucket + File.separator + mail;</span>
+<span class="nc" id="L180">        return &quot;\n&quot; +</span>
+                &quot;&lt;!DOCTYPE html&gt;\n&quot; +
+                &quot;&lt;html lang=\&quot;ko\&quot;&gt;\n&quot; +
+                &quot;&lt;head&gt;\n&quot; +
+                &quot;&lt;meta charset=\&quot;UTF-8\&quot;&gt;\n&quot; +
+                &quot;&lt;meta name=\&quot;viewport\&quot; content=\&quot;width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no\&quot; /&gt;\n&quot; +
+                &quot;&lt;title&gt;교보문고&lt;/title&gt;\n&quot; +
+                &quot;&lt;style&gt;\n&quot; +
+                &quot;\t@charset \&quot;utf-8\&quot;;\n&quot; +
+                &quot;\t@import url('https://fonts.googleapis.com/css?family=Noto+Sans');\n&quot; +
+                &quot;&lt;/style&gt;\n&quot; +
+                &quot;&lt;/head&gt;\n&quot; +
+                &quot;&lt;body style=\&quot;margin: 0; padding: 0;\&quot;&gt;\n&quot; +
+                &quot;\t&lt;div style=\&quot;width: 700px; margin: 0 auto; background-color: #f2f2f4\&quot; align=\&quot;center\&quot;&gt;\n&quot; +
+                &quot;\t\t&lt;div style=\&quot;width: 550px; margin: 0 auto; padding: 190px 0; text-align: center;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t&lt;strong style=\&quot;display: block; margin-bottom: 47px;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;img src=\&quot;https://s3.ap-northeast-2.amazonaws.com/&quot;+mailDir+&quot;/login_logo.png\&quot; alt=\&quot;vora로고\&quot; style=\&quot;vertical-align: top; cursor: pointer\&quot; /&gt;\n&quot; +
+                &quot;\t\t\t&lt;/strong&gt;\n&quot; +
+                &quot;\t\t\t&lt;p style=\&quot;line-height: 24px; margin: 0 0 20px 0; font-family: 'Noto Sans', 'sans-serif'; font-size: 16px; font-weight: normal; color: #333;\&quot;&gt;\n&quot; +
+<span class="nc" id="L199">                &quot;\t\t\t\t안녕하세요 &lt;span style=\&quot;font-size: 18px; font-weight: 500;\&quot;&gt;&quot;+member.getNickName()+&quot;&lt;/span&gt;님&lt;br&gt;\n&quot; +</span>
+                &quot;\t\t\t\t아래 임시 비밀번호로 로그인 후 꼭 비밀번호를 변경해주세요.\n&quot; +
+                &quot;\t\t\t&lt;/p&gt;\n&quot; +
+                &quot;\t\t\t&lt;div style=\&quot;width: 400px; height: 65px; line-height: 65px; margin: 0 auto; background-color: #e8e8e8; color: #96278f;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;p style=\&quot;margin: 0; font-size: 18px;\&quot;&gt;&quot;+password+&quot;&lt;/p&gt;\n&quot; +
+                &quot;\t\t\t&lt;/div&gt;\n&quot; +
+                &quot;\t\t\t&lt;a href=\&quot;&quot;+frontendUri+&quot;\&quot; style=\&quot;position: relative; display: block; width: 400px; margin: 50px auto 0; text-decoration: none;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;img src=\&quot;https://s3.ap-northeast-2.amazonaws.com/&quot;+mailDir+&quot;/btn_mail01.png\&quot; alt=\&quot;VORA 시작하기\&quot; style=\&quot;border: 0; vertical-align: top;\&quot; /&gt;\n&quot; +
+                &quot;\t\t\t&lt;/a&gt;\n&quot; +
+                &quot;\t\t\t&lt;div style=\&quot;margin-top:57px;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;p style=\&quot;margin: 0; font-family: 'Noto Sans', 'sans-serif'; font-size:12px; color:#c7c7c7;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t\t&lt;a href=\&quot;#\&quot; style=\&quot;color: #c7c7c7; text-decoration:none; \&quot;&gt;VORA소개&lt;/a&gt; · \n&quot; +
+                &quot;\t\t\t\t\t&lt;a href=\&quot;#\&quot; style=\&quot;color: #c7c7c7; text-decoration:none; \&quot;&gt;개인정보처리방침&lt;/a&gt; · \n&quot; +
+                &quot;\t\t\t\t\t&lt;a href=\&quot;#\&quot; style=\&quot;color: #c7c7c7; text-decoration:none; \&quot;&gt;이용약관&lt;/a&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;/p&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;p style=\&quot;margin-bottom:17px; font-family: 'Noto Sans', 'sans-serif'; font-size:12px; color:#c7c7c7;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t\t&lt;a href=\&quot;#\&quot; style=\&quot;color: #c7c7c7; text-decoration:none; \&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t\t\t&lt;img src=\&quot;https://s3.ap-northeast-2.amazonaws.com/&quot;+mailDir+&quot;/iphone_icon.png\&quot; alt=\&quot;\&quot; style=\&quot;margin-right: 5px; border: 0; vertical-align: top;\&quot;/&gt;\n&quot; +
+                &quot;\t\t\t\t\t\tiPhone 앱\n&quot; +
+                &quot;\t\t\t\t\t&lt;/a&gt;\n&quot; +
+                &quot;\t\t\t\t\t&lt;a href=\&quot;#\&quot; style=\&quot;padding-left:17px; text-decoration:none; color: #c7c7c7;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t\t\t&lt;img src=\&quot;https://s3.ap-northeast-2.amazonaws.com/&quot;+mailDir+&quot;/android_icon.png\&quot; alt=\&quot;\&quot; style=\&quot;margin-right: 5px; border: 0; vertical-align: top;\&quot;/&gt;\n&quot; +
+                &quot;\t\t\t\t\t\tAndroid 앱\n&quot; +
+                &quot;\t\t\t\t\t&lt;/a&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;/p&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;p style=\&quot;font-family: 'Noto Sans', 'sans-serif'; font-size: 12px; color: #c7c7c7\&quot;&gt;Copyright @ KYOBO BOOK CENTRE.&lt;/p&gt;\n&quot; +
+                &quot;\t\t\t&lt;/div&gt;\n&quot; +
+                &quot;\t\t&lt;/div&gt;\n&quot; +
+                &quot;\t&lt;/div&gt;\n&quot; +
+                &quot;&lt;/body&gt;\n&quot; +
+                &quot;&lt;/html&gt;\n&quot;;
+    }
+
+    @Override
+    public String deActiveAccountMail(Member member) {
+<span class="nc" id="L234">        String mailDir = bucket + File.separator + mail;</span>
+<span class="nc" id="L235">        return &quot;&lt;!DOCTYPE html&gt;\n&quot; +</span>
+                &quot;&lt;html lang=\&quot;ko\&quot;&gt;\n&quot; +
+                &quot;&lt;head&gt;\n&quot; +
+                &quot;&lt;meta charset=\&quot;UTF-8\&quot;&gt;\n&quot; +
+                &quot;&lt;meta name=\&quot;viewport\&quot; content=\&quot;width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no\&quot; /&gt;\n&quot; +
+                &quot;&lt;title&gt;교보문고&lt;/title&gt;\n&quot; +
+                &quot;&lt;style&gt;\n&quot; +
+                &quot;\t@charset \&quot;utf-8\&quot;;\n&quot; +
+                &quot;\t@import url('https://fonts.googleapis.com/css?family=Noto+Sans');\n&quot; +
+                &quot;&lt;/style&gt;\n&quot; +
+                &quot;&lt;/head&gt;\n&quot; +
+                &quot;&lt;body style=\&quot;margin: 0; padding: 0;\&quot;&gt;\n&quot; +
+                &quot;\t&lt;div style=\&quot;width: 700px; margin: 0 auto; background-color: #f2f2f4\&quot; align=\&quot;center\&quot;&gt;\n&quot; +
+                &quot;\t\t&lt;div style=\&quot;width: 550px; margin: 0 auto; padding: 190px 0; text-align: center;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t&lt;strong style=\&quot;display: block; margin-bottom: 47px;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;img src=\&quot;https://s3.ap-northeast-2.amazonaws.com/&quot;+mailDir+&quot;/login_logo.png\&quot; alt=\&quot;vora로고\&quot; style=\&quot;vertical-align: top; cursor: pointer\&quot; /&gt;\n&quot; +
+                &quot;\t\t\t&lt;/strong&gt;\n&quot; +
+                &quot;\t\t\t&lt;p style=\&quot;line-height: 24px; margin: 0 0 20px 0; font-family: 'Noto Sans', 'sans-serif'; font-size: 21px; font-weight: normal; color: #333;\&quot;&gt;\n&quot; +
+<span class="nc" id="L253">                &quot;\t\t\t\t안녕하세요 &lt;span style=\&quot;font-size: 23px; font-weight: 500;\&quot;&gt;&quot;+member.getNickName()+&quot;&lt;/span&gt;님&lt;br&gt;\n&quot; +</span>
+                &quot;\t\t\t\t휴면회원 안내 메일입니다\n&quot; +
+                &quot;\t\t\t&lt;/p&gt;\n&quot; +
+                &quot;\t\t\t&lt;p style=\&quot;line-height: 24px; font-family: 'Noto Sans', 'sans-serif'; font-size: 16px; font-weight: normal; color: #333; margin: 0 0 20px 0;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\tVORA 에서는 고객님의 개인정보 보호를 위하여&lt;br/&gt;\n&quot; +
+                &quot;\t\t\t\t아래와 같이 휴면계정 대상 예정을 안내드립니다.&lt;br/&gt;\n&quot; +
+                &quot;\t\t\t\t휴면회원 전환 예정일 전까지 VORA에 접속하셔서 로그인을 해주세요.&lt;br/&gt;\n&quot; +
+                &quot;\t\t\t\t로그인을 하시면, 휴면상태가 되지 않습니다.\n&quot; +
+                &quot;\t\t\t&lt;/p&gt;\n&quot; +
+                &quot;\t\t\t&lt;table style=\&quot;width: 100%; border: 1px solid #bbb; border-collapse: collapse; font-family: 'Noto Sans', 'sans-serif';\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;thead&gt;&lt;/thead&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;tbody&gt;\n&quot; +
+                &quot;\t\t\t\t\t&lt;tr style=\&quot;border-bottom: 1px solid #ddd;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t\t\t&lt;th style=\&quot;font-size: 15px; color: #666; text-align: left; padding: 15px 20px; font-weight: normal; background-color: #e8e8e8;\&quot;&gt;휴면회원(분리보관)대상&lt;/th&gt;\n&quot; +
+                &quot;\t\t\t\t\t\t&lt;td style=\&quot;padding: 5px; font-size: 15px; color: #666; text-align: center;\&quot;&gt;YYYY-MM-DD 이후 로그인 이력이 없는 회원&lt;/td&gt;\n&quot; +
+                &quot;\t\t\t\t\t&lt;/tr&gt;\n&quot; +
+                &quot;\t\t\t\t\t&lt;tr style=\&quot;border-bottom: 1px solid #ddd;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t\t\t&lt;th style=\&quot;font-size: 15px; color: #666; text-align: left; padding: 15px 20px; font-weight: normal; background-color: #e8e8e8;\&quot;&gt;휴면회원전환 예정일&lt;/th&gt;\n&quot; +
+                &quot;\t\t\t\t\t\t&lt;td style=\&quot;padding: 5px; font-size: 15px; color: #666; text-align: center;\&quot;&gt;YYYY-MM-DD&lt;/td&gt;\n&quot; +
+                &quot;\t\t\t\t\t&lt;/tr&gt;\n&quot; +
+                &quot;\t\t\t\t\t&lt;tr&gt;\n&quot; +
+                &quot;\t\t\t\t\t\t&lt;th style=\&quot;font-size: 15px; color: #666; text-align: left; padding: 15px 20px; font-weight: normal; background-color: #e8e8e8;\&quot;&gt;개인정보 보호 대상&lt;/th&gt;\n&quot; +
+                &quot;\t\t\t\t\t\t&lt;td style=\&quot;padding: 5px; font-size: 15px; color: #666; text-align: center;\&quot;&gt;회원정보(이메일 주소, 연락처 등)&lt;/td&gt;\n&quot; +
+                &quot;\t\t\t\t\t&lt;/tr&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;/tbody&gt;\n&quot; +
+                &quot;\t\t\t&lt;/table&gt;\n&quot; +
+                &quot;\t\t\t&lt;div style=\&quot;margin: 20px auto 0; text-align: left;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;p style=\&quot;margin: 0 0 10px 0; font-size: 15px; font-weight: 600; color: #333;\&quot;&gt;관련법령&lt;/p&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;p style=\&quot;margin: 0 0 10px 0; font-size: 14px; font-weight: 600; color: #333;\&quot;&gt;정보통신망 이용촉진 및 정보보호 등에 관한 법률 제29조(개인정보의 파기)&lt;/p&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;p style=\&quot;margin: 0 0 10px 0; font-size: 14px; font-weight: normal; line-height: 1.5; color: #333;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t\t정보통신서비스 제공자등은 정보통신서비스를 1년의 기간 동안 이용하지 아니하는 이용자의 개인정보를 보호하기 위하여 대통령령으로 정하는 바에 따라 개인정보의 파기 등 필요한 조치를 취하여야 한다.\n&quot; +
+                &quot;\t\t\t\t&lt;/p&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;p style=\&quot;margin: 0 0 10px 0; font-size: 14px; font-weight: 600; color: #333;\&quot;&gt;정보통신망 이용촉진 및 정보보호 등에 관한 법률 시행령 제16조(개인정보의 파기 등)&lt;/p&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;p style=\&quot;margin: 0 0 10px 0; font-size: 14px; font-weight: normal; line-height: 1.5; color: #333;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t\t정보통신서비스 제공자등은 이용자가 정보통신서비스를 법 제29조 제2항의 기간 동안 이용하지 아니하는 경우에는 이용자의 개인정보를 해당 기간 경과 후 즉시 파기하거나 다른 이용자의 개인정보와 분리하여 별도로 저장·관리하여야 한다.\n&quot; +
+                &quot;\t\t\t\t&lt;/p&gt;\n&quot; +
+                &quot;\t\t\t&lt;/div&gt;\n&quot; +
+                &quot;\t\t\t&lt;a href=\&quot;&quot;+frontendUri+&quot;\&quot; style=\&quot;position: relative; display: block; width: 400px; margin: 50px auto 0; text-decoration: none;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;img src=\&quot;https://s3.ap-northeast-2.amazonaws.com/&quot;+mailDir+&quot;/btn_mail01.png\&quot; alt=\&quot;VORA 시작하기\&quot; style=\&quot;border: 0; vertical-align: top;\&quot; /&gt;\n&quot; +
+                &quot;\t\t\t&lt;/a&gt;\n&quot; +
+                &quot;\t\t\t&lt;div style=\&quot;margin-top:57px;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;p style=\&quot;margin: 0; font-family: 'Noto Sans', 'sans-serif'; font-size:12px; color:#c7c7c7;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t\t&lt;a href=\&quot;#\&quot; style=\&quot;color: #c7c7c7; text-decoration:none; \&quot;&gt;VORA소개&lt;/a&gt; · \n&quot; +
+                &quot;\t\t\t\t\t&lt;a href=\&quot;#\&quot; style=\&quot;color: #c7c7c7; text-decoration:none; \&quot;&gt;개인정보처리방침&lt;/a&gt; · \n&quot; +
+                &quot;\t\t\t\t\t&lt;a href=\&quot;#\&quot; style=\&quot;color: #c7c7c7; text-decoration:none; \&quot;&gt;이용약관&lt;/a&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;/p&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;p style=\&quot;margin-bottom:17px; font-family: 'Noto Sans', 'sans-serif'; font-size:12px; color:#c7c7c7;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t\t&lt;a href=\&quot;#\&quot; style=\&quot;color: #c7c7c7; text-decoration:none; \&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t\t\t&lt;img src=\&quot;https://s3.ap-northeast-2.amazonaws.com/&quot;+mailDir+&quot;/iphone_icon.png\&quot; alt=\&quot;\&quot; style=\&quot;margin-right: 5px; border: 0; vertical-align: top;\&quot;/&gt;\n&quot; +
+                &quot;\t\t\t\t\t\tiPhone 앱\n&quot; +
+                &quot;\t\t\t\t\t&lt;/a&gt;\n&quot; +
+                &quot;\t\t\t\t\t&lt;a href=\&quot;#\&quot; style=\&quot;padding-left:17px; text-decoration:none; color: #c7c7c7;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t\t\t&lt;img src=\&quot;https://s3.ap-northeast-2.amazonaws.com/&quot;+mailDir+&quot;/android_icon.png\&quot; alt=\&quot;\&quot; style=\&quot;margin-right: 5px; border: 0; vertical-align: top;\&quot;/&gt;\n&quot; +
+                &quot;\t\t\t\t\t\tAndroid 앱\n&quot; +
+                &quot;\t\t\t\t\t&lt;/a&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;/p&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;p style=\&quot;font-family: 'Noto Sans', 'sans-serif'; font-size: 12px; color: #c7c7c7\&quot;&gt;Copyright @ KYOBO BOOK CENTRE.&lt;/p&gt;\n&quot; +
+                &quot;\t\t\t&lt;/div&gt;\n&quot; +
+                &quot;\t\t&lt;/div&gt;\n&quot; +
+                &quot;\t&lt;/div&gt;\n&quot; +
+                &quot;&lt;/body&gt;\n&quot; +
+                &quot;&lt;/html&gt;\n&quot;;
+    }
+
+    @Override
+    public String inActiveAccountMail(Member member) {
+<span class="nc" id="L319">        String mailDir = bucket + File.separator + mail;</span>
+<span class="nc" id="L320">        return &quot;\n&quot; +</span>
+                &quot;&lt;!DOCTYPE html&gt;\n&quot; +
+                &quot;&lt;html lang=\&quot;ko\&quot;&gt;\n&quot; +
+                &quot;&lt;head&gt;\n&quot; +
+                &quot;&lt;meta charset=\&quot;UTF-8\&quot;&gt;\n&quot; +
+                &quot;&lt;meta name=\&quot;viewport\&quot; content=\&quot;width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no\&quot; /&gt;\n&quot; +
+                &quot;&lt;title&gt;교보문고&lt;/title&gt;\n&quot; +
+                &quot;&lt;style&gt;\n&quot; +
+                &quot;\t@charset \&quot;utf-8\&quot;;\n&quot; +
+                &quot;\t@import url('https://fonts.googleapis.com/css?family=Noto+Sans');\n&quot; +
+                &quot;&lt;/style&gt;\n&quot; +
+                &quot;&lt;/head&gt;\n&quot; +
+                &quot;&lt;body style=\&quot;margin: 0; padding: 0;\&quot;&gt;\n&quot; +
+                &quot;\t&lt;div style=\&quot;width: 700px; margin: 0 auto; background-color: #f2f2f4\&quot; align=\&quot;center\&quot;&gt;\n&quot; +
+                &quot;\t\t&lt;div style=\&quot;width: 550px; margin: 0 auto; padding: 190px 0; text-align: center;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t&lt;strong style=\&quot;display: block; margin-bottom: 47px;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;img src=\&quot;https://s3.ap-northeast-2.amazonaws.com/&quot;+mailDir+&quot;/login_logo.png\&quot; alt=\&quot;vora로고\&quot; style=\&quot;vertical-align: top; cursor: pointer\&quot; /&gt;\n&quot; +
+                &quot;\t\t\t&lt;/strong&gt;\n&quot; +
+                &quot;\t\t\t&lt;p style=\&quot;line-height: 24px; margin: 0 0 20px 0; font-family: 'Noto Sans', 'sans-serif'; font-size: 21px; font-weight: normal; color: #333;\&quot;&gt;\n&quot; +
+<span class="nc" id="L339">                &quot;\t\t\t\t안녕하세요 &lt;span style=\&quot;font-size: 23px; font-weight: 500;\&quot;&gt;&quot;+member.getNickName()+&quot;&lt;/span&gt;님&lt;br&gt;\n&quot; +</span>
+                &quot;\t\t\t\t현재 휴면 고객입니다.\n&quot; +
+                &quot;\t\t\t&lt;/p&gt;\n&quot; +
+                &quot;\t\t\t&lt;p style=\&quot;line-height: 24px; font-family: 'Noto Sans', 'sans-serif'; font-size: 16px; font-weight: normal; color: #333; margin: 0 0 20px 0;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t휴면상태 해지를 위해 본인 확인 메일을 보내드립니다.&lt;br/&gt;\n&quot; +
+                &quot;\t\t\t\t아래 버튼을 클릭 하여 휴면상태를 해지해주세요.\n&quot; +
+                &quot;\t\t\t&lt;/p&gt;\n&quot; +
+                &quot;\n&quot; +
+                &quot;\t\t\t&lt;a href=\&quot;&quot;+frontendUri+&quot;\&quot; style=\&quot;position: relative; display: block; width: 400px; margin: 50px auto 0; text-decoration: none;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;img src=\&quot;https://s3.ap-northeast-2.amazonaws.com/&quot;+mailDir+&quot;/btn_mail01.png\&quot; alt=\&quot;VORA 시작하기\&quot; style=\&quot;border: 0; vertical-align: top;\&quot; /&gt;\n&quot; +
+                &quot;\t\t\t&lt;/a&gt;\n&quot; +
+                &quot;\t\t\t&lt;div style=\&quot;margin-top: 57px;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;p style=\&quot;margin: 0; font-family: 'Noto Sans', 'sans-serif'; font-size:12px; color:#c7c7c7;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t\t&lt;a href=\&quot;#\&quot; style=\&quot;color: #c7c7c7; text-decoration:none; \&quot;&gt;VORA소개&lt;/a&gt; · \n&quot; +
+                &quot;\t\t\t\t\t&lt;a href=\&quot;#\&quot; style=\&quot;color: #c7c7c7; text-decoration:none; \&quot;&gt;개인정보처리방침&lt;/a&gt; · \n&quot; +
+                &quot;\t\t\t\t\t&lt;a href=\&quot;#\&quot; style=\&quot;color: #c7c7c7; text-decoration:none; \&quot;&gt;이용약관&lt;/a&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;/p&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;p style=\&quot;margin-bottom:17px; font-family: 'Noto Sans', 'sans-serif'; font-size:12px; color:#c7c7c7;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t\t&lt;a href=\&quot;#\&quot; style=\&quot;color: #c7c7c7; text-decoration:none; \&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t\t\t&lt;img src=\&quot;https://s3.ap-northeast-2.amazonaws.com/&quot;+mailDir+&quot;/iphone_icon.png\&quot; alt=\&quot;\&quot; style=\&quot;margin-right: 5px; border: 0; vertical-align: top;\&quot;/&gt;\n&quot; +
+                &quot;\t\t\t\t\t\tiPhone 앱\n&quot; +
+                &quot;\t\t\t\t\t&lt;/a&gt;\n&quot; +
+                &quot;\t\t\t\t\t&lt;a href=\&quot;#\&quot; style=\&quot;padding-left:17px; text-decoration:none; color: #c7c7c7;\&quot;&gt;\n&quot; +
+                &quot;\t\t\t\t\t\t&lt;img src=\&quot;https://s3.ap-northeast-2.amazonaws.com/&quot;+mailDir+&quot;/android_icon.png\&quot; alt=\&quot;\&quot; style=\&quot;margin-right: 5px; border: 0; vertical-align: top;\&quot;/&gt;\n&quot; +
+                &quot;\t\t\t\t\t\tAndroid 앱\n&quot; +
+                &quot;\t\t\t\t\t&lt;/a&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;/p&gt;\n&quot; +
+                &quot;\t\t\t\t&lt;p style=\&quot;font-family: 'Noto Sans', 'sans-serif'; font-size: 12px; color: #c7c7c7\&quot;&gt;Copyright @ KYOBO BOOK CENTRE.&lt;/p&gt;\n&quot; +
+                &quot;\t\t\t&lt;/div&gt;\n&quot; +
+                &quot;\t\t&lt;/div&gt;\n&quot; +
+                &quot;\t&lt;/div&gt;\n&quot; +
+                &quot;&lt;/body&gt;\n&quot; +
+                &quot;&lt;/html&gt;\n&quot;;
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

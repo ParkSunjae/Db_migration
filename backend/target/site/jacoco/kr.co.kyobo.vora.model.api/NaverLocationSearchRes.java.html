@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NaverLocationSearchRes.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">backend</a> &gt; <a href="index.source.html" class="el_package">kr.co.kyobo.vora.model.api</a> &gt; <span class="el_source">NaverLocationSearchRes.java</span></div><h1>NaverLocationSearchRes.java</h1><pre class="source lang-java linenums">package kr.co.kyobo.vora.model.api;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Data;
+
+import java.util.Date;
+import java.util.List;
+
+<span class="nc bnc" id="L9" title="All 30 branches missed.">@Data</span>
+public class NaverLocationSearchRes {
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = &quot;yyyy-MM-dd HH:mm:ss&quot;)
+<span class="nc" id="L12">    private Date lastBuildDate;     //  datetime	검색 결과를 생성한 시간이다.</span>
+<span class="nc" id="L13">    private int total;              //  integer	검색 결과 문서의 총 개수를 의미한다.</span>
+<span class="nc" id="L14">    private int start;              //  integer	검색 결과 문서 중, 문서의 시작점을 의미한다.페이징번호</span>
+<span class="nc" id="L15">    private int display;            //  integer	검색된 검색 결과의 개수이다.</span>
+<span class="nc" id="L16">    private int category;           //  string	검색 결과 업체, 기관의 분류 정보를 제공한다.</span>
+<span class="nc" id="L17">    private List&lt;Item&gt; items;       //	개별 검색 결과이며 title, link, description, telephone, address, mapx, mapy를 포함한다.</span>
+
+<span class="nc bnc" id="L19" title="All 70 branches missed.">    @Data</span>
+    public class Item {
+<span class="nc" id="L21">        private String title;       //	string	검색 결과 업체, 기관명을 나타낸다.</span>
+<span class="nc" id="L22">        private String link;        //	string	검색 결과 업체, 기관의 상세 정보가 제공되는 네이버 페이지의 하이퍼텍스트 link를 나타낸다.</span>
+<span class="nc" id="L23">        private String description; //	string	검색 결과 업체, 기관명에 대한 설명을 제공한다.</span>
+<span class="nc" id="L24">        private String telephone;   //	string	검색 결과 업체, 기관명의 전화번호를 제공한다.</span>
+<span class="nc" id="L25">        private String address;     //	string	검색 결과 업체, 기관명의 주소를 제공한다.</span>
+<span class="nc" id="L26">        private String roadAddress; //	string	검색 결과 업체, 기관명의 도로명 주소를 제공한다.</span>
+<span class="nc" id="L27">        private String mapx;        //	integer	검색 결과 업체, 기관명 위치 정보의 x좌표를 제공한다. 제공값은 카텍좌표계 값으로 제공된다. 이 좌표값은 지도 API와 연동 가능하다.</span>
+<span class="nc" id="L28">        private Double mapy;        //	integer	검색 결과 업체, 기관명 위치 정보의 y좌표를 제공한다. 제공값은 카텍 좌표계 값으로 제공된다. 이 좌표값은 지도 API와 연동 가능하다.</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

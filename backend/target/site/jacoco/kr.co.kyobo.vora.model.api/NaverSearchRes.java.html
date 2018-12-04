@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NaverSearchRes.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">backend</a> &gt; <a href="index.source.html" class="el_package">kr.co.kyobo.vora.model.api</a> &gt; <span class="el_source">NaverSearchRes.java</span></div><h1>NaverSearchRes.java</h1><pre class="source lang-java linenums">package kr.co.kyobo.vora.model.api;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import java.util.Date;
+import java.util.List;
+
+<span class="nc" id="L8">public class NaverSearchRes {</span>
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = &quot;yyyy-MM-dd HH:mm:ss&quot;)
+    private Date lastBuildDate;     //검색 결과를 생성한 시간이다.
+    private int total;              //전체 개수
+    private int start;              //페이징번호
+    private int display;            //페이징당 개수
+    private List&lt;Item&gt; items;        //	-	개별 검색 결과이며 title, link, image, subtitle, pubDate, director, actor, userRating을 포함한다.
+
+<span class="nc" id="L16">    public class Item {</span>
+        private String title;       //	string	검색 결과 영화의 제목을 나타낸다. 제목에서 검색어와 일치하는 부분은 태그로 감싸져 있다.
+        private String link;        //	string	검색 결과 영화의 하이퍼텍스트 link를 나타낸다.
+        private String image;       //	string	검색 결과 영화의 썸네일 이미지의 URL이다. 이미지가 있는 경우만 나타난다.
+        private String subtitle;    //	string	검색 결과 영화의 영문 제목이다.
+        private String pubDate;     //	date	검색 결과 영화의 제작년도이다.
+        private String director;    //	string	검색 결과 영화의 감독이다.
+        private String actor;       //	string	검색 결과 영화의 출연 배우이다.
+        private Double userRating;  //	integer	검색 결과 영화에 대한 유저들의 평점이다.
+
+        public String getTitle() {
+<span class="nc" id="L27">            return title;</span>
+        }
+
+        public void setTitle(String title) {
+<span class="nc" id="L31">            this.title = title;</span>
+<span class="nc" id="L32">        }</span>
+
+        public String getLink() {
+<span class="nc" id="L35">            return link;</span>
+        }
+
+        public void setLink(String link) {
+<span class="nc" id="L39">            this.link = link;</span>
+<span class="nc" id="L40">        }</span>
+
+        public String getImage() {
+<span class="nc" id="L43">            return image;</span>
+        }
+
+        public void setImage(String image) {
+<span class="nc" id="L47">            this.image = image;</span>
+<span class="nc" id="L48">        }</span>
+
+        public String getSubtitle() {
+<span class="nc" id="L51">            return subtitle;</span>
+        }
+
+        public void setSubtitle(String subtitle) {
+<span class="nc" id="L55">            this.subtitle = subtitle;</span>
+<span class="nc" id="L56">        }</span>
+
+        public String getPubDate() {
+<span class="nc" id="L59">            return pubDate;</span>
+        }
+
+        public void setPubDate(String pubDate) {
+<span class="nc" id="L63">            this.pubDate = pubDate;</span>
+<span class="nc" id="L64">        }</span>
+
+        public String getDirector() {
+<span class="nc" id="L67">            return director;</span>
+        }
+
+        public void setDirector(String director) {
+<span class="nc" id="L71">            this.director = director;</span>
+<span class="nc" id="L72">        }</span>
+
+        public String getActor() {
+<span class="nc" id="L75">            return actor;</span>
+        }
+
+        public void setActor(String actor) {
+<span class="nc" id="L79">            this.actor = actor;</span>
+<span class="nc" id="L80">        }</span>
+
+        public Double getUserRating() {
+<span class="nc" id="L83">            return userRating;</span>
+        }
+
+        public void setUserRating(Double userRating) {
+<span class="nc" id="L87">            this.userRating = userRating;</span>
+<span class="nc" id="L88">        }</span>
+    }
+
+    public Date getLastBuildDate() {
+<span class="nc" id="L92">        return lastBuildDate;</span>
+    }
+
+    public void setLastBuildDate(Date lastBuildDate) {
+<span class="nc" id="L96">        this.lastBuildDate = lastBuildDate;</span>
+<span class="nc" id="L97">    }</span>
+
+    public int getTotal() {
+<span class="nc" id="L100">        return total;</span>
+    }
+
+    public void setTotal(int total) {
+<span class="nc" id="L104">        this.total = total;</span>
+<span class="nc" id="L105">    }</span>
+
+    public int getStart() {
+<span class="nc" id="L108">        return start;</span>
+    }
+
+    public void setStart(int start) {
+<span class="nc" id="L112">        this.start = start;</span>
+<span class="nc" id="L113">    }</span>
+
+    public int getDisplay() {
+<span class="nc" id="L116">        return display;</span>
+    }
+
+    public void setDisplay(int display) {
+<span class="nc" id="L120">        this.display = display;</span>
+<span class="nc" id="L121">    }</span>
+
+    public List&lt;Item&gt; getItems() {
+<span class="nc" id="L124">        return items;</span>
+    }
+
+    public void setItems(List&lt;Item&gt; items) {
+<span class="nc" id="L128">        this.items = items;</span>
+<span class="nc" id="L129">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UriMethod.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">deactive_member</a> &gt; <a href="index.source.html" class="el_package">kr.co.kyobo.vora.common.api</a> &gt; <span class="el_source">UriMethod.java</span></div><h1>UriMethod.java</h1><pre class="source lang-java linenums">package kr.co.kyobo.vora.common.api;
+
+<span class="nc" id="L3">public class UriMethod {</span>
+
+    /**
+     * Member
+     */
+    public static final String SIGN_IN = &quot;/signIn&quot;;
+    public static final String SIGN_IN_T = &quot;/signInT&quot;;
+    public static final String SIGN_OUT = &quot;/signOut&quot;;
+    public static final String SIGN_UP = &quot;/signUp&quot;;
+
+
+    public static final String CHECK_NICKNAME = &quot;/checkNickName&quot;;
+    public static final String LOAD_MEMBERPROFILE = &quot;/loadMemberProfile&quot;;
+    public static final String MODIFY_MEMBERPROFILE = &quot;/modifyMemberProfile&quot;;
+    public static final String SAVE_MEMBER_YEAR = &quot;/saveYear&quot;;
+
+    /**
+     * Feeds
+     */
+    public static final String FEEDS_POST = &quot;/post&quot;;
+    public static final String FEEDS_WRITE = &quot;/write&quot;;
+
+    public static final String FIND_FOLLOWERS = &quot;/findFollowers&quot;;
+    public static final String GET_MY_SCRAPS = &quot;/getMyScrapList&quot;;
+    public static final String GET_MY_FEED = &quot;/getMyFeed&quot;;
+    public static final String GET_TOGETHER = &quot;/getToGetter&quot;;
+    public static final String SET_FEED_LIKE_TOGGLE = &quot;/setFeedLikeToggle&quot;;
+    public static final String SET_FEED_SCRAP_TOGGLE = &quot;/setFeedScrapToggle&quot;;
+    public static final String FEED_VIEW = &quot;/feedView&quot;;
+    public static final String SET_COMMENT_LIKE_TOGGLE = &quot;/commentLikeToggle&quot;;
+    public static final String REMOVE_COMMENT = &quot;/removeComment&quot;;
+    public static final String UPDATE_COMMENT = &quot;/updateComment&quot;;
+
+    public static final String GET_MAIN_FEED = &quot;/getMainFeed&quot;;
+    public static final String DELETE_FEED = &quot;/deleteFeed&quot;;
+
+    public static final String GET_TAG_FEED = &quot;/getTagFeed&quot;;
+    public static final String GET_TAG_FEED_POPULAR = &quot;/getTagFeedPopular&quot;;
+
+    public static final String GET_MEMBER_FEED = &quot;/getMemberFeed&quot;;
+    public static final String GET_MEMBER_FEED_TOGETER = &quot;/getMemberFeedTogether&quot;;
+
+    /**
+     * MemberBlockMember
+     */
+    public static final String FIND_BLOCKMEMBERS = &quot;/findBlockMembers&quot;;
+    public static final String DELETE_MEMBERBLOCKMEMBERS = &quot;/deleteMemberBlockMembers&quot;;
+    public static final String TOGGLE_MEMBER_BLOCK_MEMBER = &quot;/toggleMemberBlockMember&quot;;
+
+    /**
+     * BusinessCategory
+     */
+    public static final String BUSINESSCATEGORY1_LIST = &quot;/getBusinessCategory1&quot;;
+    public static final String BUSINESSCATEGORY2_LIST = &quot;/getBusinessCategory2&quot;;
+
+
+    public static final String FIND_COMMENT_BY_LIKE = &quot;/getCommentByLikeCount&quot;;
+    public static final String FIND_COMMENT_BY_NEWS = &quot;/getCommentByIdxCount&quot;;
+    public static final String ADD_FEED_COMMENT = &quot;/addFeedComment&quot;;
+
+    /**
+     * Notice
+     */
+    public static final String GET_NOTICE_BY_USE_YN = &quot;/getNoticeByUseYn&quot;;
+    public static final String GET_NOTICE_ALL = &quot;/getNoticeAll&quot;;
+    public static final String UPDATE_NOTICE = &quot;/updateNotice&quot;;
+    public static final String INSERT_NOTICE = &quot;/insertNotice&quot;;
+    public static final String DELETE_NOTICE = &quot;/deleteNotice&quot;;
+
+    /**
+     * Help
+     */
+    public static final String GET_HELP_BY_USE_YN = &quot;/getHelpByUseYn&quot;;
+    public static final String GET_HELP_ALL = &quot;/getHelpAll&quot;;
+    public static final String UPDATE_HELP = &quot;/updateHelp&quot;;
+    public static final String INSERT_HELP = &quot;/insertHelp&quot;;
+    public static final String DELETE_HELP = &quot;/deleteHelp&quot;;
+
+    /**
+     * Inquiry
+     */
+    public static final String SAVE_INQUIRY = &quot;/saveInquiry&quot;;
+    public static final String UPDATE_INQUIRY = &quot;/updateInquiry&quot;;
+    public static final String FIND_REQUEST_INQUIRY = &quot;/getInquiry&quot;;
+
+    /**
+     * tags
+     */
+    public static final String CALL_TAGS = &quot;/callTags&quot;;
+    public static final String SAVE_USERS_TAGS = &quot;/saveUsersTags&quot;;
+    public static final String GET_ADMIN_CHECK_USERS = &quot;/adminCheckUsers&quot;;
+    public static final String GET_SUGGEST_USERS = &quot;/getSuggestUserFind&quot;;
+
+    public static final String SAVE_MEMBER_FOLLOWER = &quot;/saveFollowers&quot;;
+    public static final String TOGGLE_FOLLOW_MEMBER = &quot;/toggleFollowMember&quot;;
+    public static final String CHECK_FOLLOW_MEMBER = &quot;/checkFollowMember&quot;;
+
+    /**
+     * personal recommend
+     */
+    public static final String TAG_RECOMMEND_PC = &quot;/tagRecommendPC&quot;;
+    public static final String TAG_RECOMMEND_MOBILE = &quot;/tagRecommendMobile&quot;;
+    public static final String USER_RECOMMEND_PC = &quot;/userRecommendPC&quot;;
+    public static final String USER_RECOMMEND_MOBILE = &quot;/userRecommendMobile&quot;;
+    public static final String POST_RECOMMEND = &quot;/postRecommend&quot;;
+    public static final String CALL_MY_ALARM = &quot;/callMyAlarm&quot;;
+    public static final String CALL_MY_ALARM_COUNT = &quot;/callMyAlarmCount&quot;;
+    public static final String FIND_JOIN_TERMS = &quot;/findJoinTerms&quot;;
+    public static final String GET_ALL_TERMS = &quot;/getAllTerms&quot;;
+
+    /**
+     * feed report
+     */
+    public static final String SAVE_FEED_REPORT = &quot;/saveFeedReport&quot;;
+
+    /**
+     * feed comment report
+     */
+    public static final String SAVE_FEED_COMMENT_REPORT = &quot;/saveFeedCommentReport&quot;;
+    public static final String MAIL_VERIFICATION = &quot;/mailVerification&quot;;
+    public static final String CHANGE_STATUS= &quot;/changeStatusMail&quot;;
+    public static final String GET_USER_ACCOUNT = &quot;/getUserAccount&quot;;
+    public static final String SEND_CERT_MAIL = &quot;/sendCertMail&quot;;
+    public static final String TEMP_PWD_SEND = &quot;/tempPwdSend&quot;;
+    public static final String CHECK_EMAIL = &quot;/checkUserMail&quot;;
+
+    /**
+     * relations
+     */
+    public static final String GET_RELATED_TAG = &quot;/getRelatedTag&quot;;
+    public static final String GET_RELATED_USER = &quot;/getRelatedUser&quot;;
+    public static final String CHECK_PASSWORD = &quot;/checkPassword&quot;;
+
+    public static final String GET_ACTION_LIST = &quot;/getActionList&quot;;
+    public static final String GET_LOGIN_LOG_LIST = &quot;/getLoginLogList&quot;;
+    public static final String FEEDS_UPDATE = &quot;/update&quot;;
+    public static final String CHANGE_ALARM_SHOW = &quot;/changeAlarmShow&quot;;
+    public static final String FEED_UPDATE_DATA = &quot;/findDetailData&quot;;
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

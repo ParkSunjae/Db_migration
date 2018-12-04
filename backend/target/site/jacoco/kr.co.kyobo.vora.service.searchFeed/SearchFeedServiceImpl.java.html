@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SearchFeedServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">backend</a> &gt; <a href="index.source.html" class="el_package">kr.co.kyobo.vora.service.searchFeed</a> &gt; <span class="el_source">SearchFeedServiceImpl.java</span></div><h1>SearchFeedServiceImpl.java</h1><pre class="source lang-java linenums">package kr.co.kyobo.vora.service.searchFeed;
+
+import kr.co.kyobo.vora.common.CommonUtils;
+import kr.co.kyobo.vora.model.api.ResponseEntityUtil;
+import kr.co.kyobo.vora.model.database.*;
+import kr.co.kyobo.vora.model.vo.FinalObj;
+import kr.co.kyobo.vora.model.vo.FindFeedsListObj;
+import kr.co.kyobo.vora.model.vo.ResponseFeedComment;
+import kr.co.kyobo.vora.model.vo.ResponseMyFeeds;
+import kr.co.kyobo.vora.repository.*;
+import kr.co.kyobo.vora.service.feeds.FeedsService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.List;
+
+<span class="nc" id="L23">@Slf4j</span>
+@Service
+@Transactional
+<span class="nc" id="L26">public class SearchFeedServiceImpl implements SearchFeedService {</span>
+    @Autowired
+    private FeedsRepository feedsRepository;
+    @Autowired
+    private MemberRepository memberRepository;
+    @Autowired
+    private FilesRepository filesRepository;
+    @Autowired
+    private AccountRepository accountRepository;
+    @Autowired
+    private FeedLikerRepository feedLikerRepository;
+    @Autowired
+    private FeedCommentRepository feedCommentRepository;
+    @Autowired
+    private MemberScrapFeedsRepository memberScrapFeedsRepository;
+    @Autowired
+    private TagsRepository tagsRepository;
+    @Autowired
+    private FeedMemberTagRespository feedMemberTagRespository;
+    @Autowired
+    private FeedsService feedsService;
+    @Autowired
+    private SearchHistoryRepository searchHistoryRepository;
+
+    @Override
+    public ResponseEntity&lt;Object&gt; searchFeedList(FindFeedsListObj findFeedsListObj, HttpServletRequest request) {
+<span class="nc" id="L52">        setPage(findFeedsListObj);</span>
+<span class="nc" id="L53">        SearchHistory searchHistory = new SearchHistory();</span>
+<span class="nc" id="L54">        searchHistory.setIp(CommonUtils.checkIp(request));</span>
+<span class="nc" id="L55">        searchHistory.setSearch(findFeedsListObj.getQuery());</span>
+<span class="nc" id="L56">        searchHistory.setUIdx(findFeedsListObj.getIdx());</span>
+<span class="nc" id="L57">        searchHistoryRepository.saveQueryHistory(searchHistory);</span>
+
+<span class="nc" id="L59">        List&lt;Feeds&gt; feedList = feedsRepository.findByQuery(findFeedsListObj);</span>
+<span class="nc" id="L60">        int total = feedsRepository.totalCountMyFeed();</span>
+<span class="nc" id="L61">        List&lt;ResponseMyFeeds&gt; searchResult = feedInfofind(findFeedsListObj,feedList);</span>
+<span class="nc" id="L62">        FinalObj finalObj = makeResponseDataSet(findFeedsListObj,searchResult,total);</span>
+<span class="nc" id="L63">        return ResponseEntityUtil.makeResultSuccess(finalObj);</span>
+    }
+
+    private FinalObj makeResponseDataSet(FindFeedsListObj feeds, List&lt;ResponseMyFeeds&gt; myFeedsArrayList, int total) {
+<span class="nc" id="L67">        FinalObj finalObj = new FinalObj();</span>
+<span class="nc" id="L68">        finalObj.setLimit(feeds.getLimit());</span>
+<span class="nc bnc" id="L69" title="All 2 branches missed.">        if(myFeedsArrayList.size() &gt; 0){</span>
+<span class="nc" id="L70">            finalObj.setPage(feeds.getPage() + 1);</span>
+        }else{
+<span class="nc" id="L72">            finalObj.setPage(feeds.getPage());</span>
+        }
+
+<span class="nc" id="L75">        finalObj.setTotalCount(total);</span>
+
+
+
+<span class="nc bnc" id="L79" title="All 2 branches missed.">        for(ResponseMyFeeds responseMyFeeds : myFeedsArrayList){</span>
+<span class="nc" id="L80">            FindFeedsListObj save = new FindFeedsListObj();</span>
+<span class="nc" id="L81">            save.setIdx(responseMyFeeds.getIdx());</span>
+<span class="nc" id="L82">            List&lt;FeedComment&gt; parents = this.feedCommentRepository.findParentCommnetByFeedsIdxOrderByIdxAsc(save);</span>
+<span class="nc" id="L83">            responseMyFeeds.setCommentList(this.feedsService.makeCommentList(feeds, parents, false));</span>
+<span class="nc" id="L84">        }</span>
+<span class="nc" id="L85">        finalObj.setRtns(myFeedsArrayList);</span>
+<span class="nc" id="L86">        return finalObj;</span>
+    }
+
+    private List&lt;ResponseMyFeeds&gt; feedInfofind(FindFeedsListObj feeds, List&lt;Feeds&gt; finded){
+        //return object
+<span class="nc" id="L91">        List&lt;ResponseMyFeeds&gt; myFeedsArrayList = new ArrayList&lt;&gt;();</span>
+
+<span class="nc bnc" id="L93" title="All 2 branches missed.">        for(Feeds feeds1 : finded){</span>
+<span class="nc" id="L94">            ResponseMyFeeds responseMyFeeds = new ResponseMyFeeds();</span>
+<span class="nc" id="L95">            BeanUtils.copyProperties(feeds1, responseMyFeeds);</span>
+
+            // 사용자 정보
+<span class="nc" id="L98">            Member member = this.memberRepository.findByIdx(feeds1.getUIdx());</span>
+<span class="nc" id="L99">            responseMyFeeds.setMember(member);</span>
+<span class="nc" id="L100">            Files memberProfile = this.filesRepository.findByIdx(member.getFileIdx());</span>
+<span class="nc" id="L101">            responseMyFeeds.setMemberProfile(memberProfile);</span>
+
+            // 계정 정보
+<span class="nc" id="L104">            Account account = this.accountRepository.findByUserIdx(member.getIdx());</span>
+<span class="nc" id="L105">            responseMyFeeds.setAccount(account);</span>
+
+            // 피드의 코멘트 정보
+<span class="nc" id="L108">            List&lt;ResponseFeedComment&gt; responseFeedCommentList = this.feedCommentRepository.findByFeedsIdxOnResonse(feeds1.getIdx());</span>
+<span class="nc bnc" id="L109" title="All 2 branches missed.">            for(ResponseFeedComment responseFeedComment : responseFeedCommentList){</span>
+<span class="nc" id="L110">                Member member2 = this.memberRepository.findByIdx(responseFeedComment.getUIdx());</span>
+<span class="nc" id="L111">                Files memberProfile2 = this.filesRepository.findByIdx(member2.getFileIdx());</span>
+<span class="nc" id="L112">                responseFeedComment.setMember(member2);</span>
+<span class="nc" id="L113">                responseFeedComment.setFiles(memberProfile2);</span>
+<span class="nc" id="L114">            }</span>
+<span class="nc" id="L115">            responseMyFeeds.setComments(responseFeedCommentList);</span>
+<span class="nc" id="L116">            responseMyFeeds.setCommentCount(responseFeedCommentList.size());</span>
+
+<span class="nc" id="L118">            Boolean meLikeCheck = false;</span>
+<span class="nc" id="L119">            Boolean meCommentCheck = false;</span>
+<span class="nc" id="L120">            Boolean meScrapCheck = false;</span>
+            // 피드의 좋아요 정보
+<span class="nc" id="L122">            List&lt;FeedLiker&gt; likers = this.feedLikerRepository.findByFeedsIdx(feeds1.getIdx());</span>
+<span class="nc bnc" id="L123" title="All 2 branches missed.">            for(FeedLiker feedLiker : likers){</span>
+<span class="nc bnc" id="L124" title="All 2 branches missed.">                if(feedLiker.getUIdx() == feeds.getIdx()){</span>
+<span class="nc" id="L125">                    meLikeCheck = true;</span>
+                }
+<span class="nc" id="L127">            }</span>
+<span class="nc" id="L128">            responseMyFeeds.setMeLikeCheck(meLikeCheck);</span>
+<span class="nc" id="L129">            responseMyFeeds.setLikers(likers);</span>
+<span class="nc" id="L130">            responseMyFeeds.setLikeCount(likers.size());</span>
+
+            // 피드의 스크랍 여부 정보
+<span class="nc" id="L133">            List&lt;MemberScrapFeeds&gt; scrapFeeds = this.memberScrapFeedsRepository.findByFeedIdx(feeds1.getIdx());</span>
+<span class="nc bnc" id="L134" title="All 2 branches missed.">            for(MemberScrapFeeds memberScrapFeeds : scrapFeeds){</span>
+<span class="nc bnc" id="L135" title="All 2 branches missed.">                if(memberScrapFeeds.getUIdx() == feeds.getIdx()){</span>
+<span class="nc" id="L136">                    meScrapCheck = true;</span>
+                }
+<span class="nc" id="L138">            }</span>
+
+<span class="nc" id="L140">            Feeds feeds2 = new Feeds();</span>
+<span class="nc" id="L141">            feeds2.setIdx(feeds1.getIdx());</span>
+<span class="nc" id="L142">            feeds2.setUIdx(feeds.getUIdx());</span>
+
+
+<span class="nc" id="L145">            int checkComment = this.feedCommentRepository.findMyCommentByFeedIdxAndUidx(feeds2);</span>
+<span class="nc bnc" id="L146" title="All 2 branches missed.">            if(checkComment &gt; 0){</span>
+<span class="nc" id="L147">                meCommentCheck = true;</span>
+            }
+<span class="nc" id="L149">            log.info(&quot;meCommentCheck==&quot;+meCommentCheck.toString());</span>
+<span class="nc" id="L150">            responseMyFeeds.setMeCommentCheck(meCommentCheck);</span>
+
+<span class="nc" id="L152">            responseMyFeeds.setMeScrapCheck(meScrapCheck);</span>
+<span class="nc" id="L153">            responseMyFeeds.setScraps(scrapFeeds);</span>
+<span class="nc" id="L154">            responseMyFeeds.setScrapCount(scrapFeeds.size());</span>
+
+<span class="nc" id="L156">            responseMyFeeds.setMeCommentCheck(meCommentCheck);</span>
+
+            // 파일정보
+<span class="nc" id="L159">            List&lt;Files&gt; files = this.filesRepository.findByFeedIdx(feeds1.getIdx());</span>
+<span class="nc" id="L160">            responseMyFeeds.setFiles(files);</span>
+<span class="nc" id="L161">            responseMyFeeds.setFileCount(files.size());</span>
+
+            // 피드연관 태그 정보getMyFeedsList
+<span class="nc" id="L164">            List&lt;Tags&gt; findTags = this.tagsRepository.findByFeedIdx(feeds1.getIdx());</span>
+<span class="nc" id="L165">            responseMyFeeds.setFeedTags(findTags);</span>
+
+            // 피드연관 팔로워의 게시물
+<span class="nc" id="L168">            List&lt;Member&gt; findFeedMemberTags = this.feedMemberTagRespository.findByFeedIdx(feeds1.getIdx());</span>
+<span class="nc" id="L169">            responseMyFeeds.setFeedMemberTag(findFeedMemberTags);</span>
+
+<span class="nc" id="L171">            FindFeedsListObj save = new FindFeedsListObj();</span>
+<span class="nc" id="L172">            save.setIdx(feeds1.getIdx());</span>
+<span class="nc" id="L173">            log.info(&quot;feeds===&quot;+feeds1.getIdx());</span>
+<span class="nc" id="L174">            List&lt;FeedComment&gt; parents = this.feedCommentRepository.findParentCommnetByFeedsIdxOrderByIdxAsc(save);</span>
+<span class="nc" id="L175">            log.info(&quot;commentSize===&quot;+parents.size());</span>
+<span class="nc" id="L176">            responseMyFeeds.setCommentList(this.feedsService.makeCommentList(save, parents, false));</span>
+<span class="nc" id="L177">            myFeedsArrayList.add(responseMyFeeds);</span>
+<span class="nc" id="L178">        }</span>
+<span class="nc" id="L179">        return myFeedsArrayList;</span>
+    }
+
+    private void setPage(FindFeedsListObj findFeedsListObj) {
+<span class="nc bnc" id="L183" title="All 2 branches missed.">        if (findFeedsListObj.getPage() &gt; 1) {</span>
+<span class="nc" id="L184">            findFeedsListObj.setOffset((findFeedsListObj.getPage() - 1) * findFeedsListObj.getLimit());</span>
+        } else {
+<span class="nc" id="L186">            findFeedsListObj.setOffset((findFeedsListObj.getPage() - 1));</span>
+        }
+<span class="nc" id="L188">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

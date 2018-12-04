@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PersonalServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">backend</a> &gt; <a href="index.source.html" class="el_package">kr.co.kyobo.vora.service.recommendation</a> &gt; <span class="el_source">PersonalServiceImpl.java</span></div><h1>PersonalServiceImpl.java</h1><pre class="source lang-java linenums">package kr.co.kyobo.vora.service.recommendation;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import kr.co.kyobo.vora.messages.ErrorMessages;
+import kr.co.kyobo.vora.model.api.*;
+import kr.co.kyobo.vora.model.database.*;
+import kr.co.kyobo.vora.model.vo.FindFeedsListObj;
+import kr.co.kyobo.vora.model.vo.MemberObj;
+import kr.co.kyobo.vora.model.vo.ResponseFeedComment;
+import kr.co.kyobo.vora.model.vo.ResponseMyFeeds;
+import kr.co.kyobo.vora.repository.*;
+import kr.co.kyobo.vora.service.feeds.FeedsService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+<span class="nc" id="L31">@Slf4j</span>
+@Service
+@Transactional
+<span class="nc" id="L34">public class PersonalServiceImpl implements PersonalService {</span>
+    @Value(&quot;${recommendServiceUri}&quot;)
+    String apiUrl;
+    @Value(&quot;${recommendTagRelationTag}&quot;)
+    String recommendTagRelationTag;
+    @Value(&quot;${recommendPopularPersonPost}&quot;)
+    String recommendPopularPersonPost;
+    @Value(&quot;${recommendTagMobileServicePersonalUrl}&quot;)
+    String recommendTagMobileServicePersonalUrl;
+    @Value(&quot;${recommendTagPcServicePersonalUrl}&quot;)
+    String recommendTagPcServicePersonalUrl;
+    @Value(&quot;${recommendUserMobileServicePersonalUrl}&quot;)
+    String recommendUserMobileServicePersonalUrl;
+    @Value(&quot;${recommendUserPcServicePersonalUrl}&quot;)
+    String recommendUserPcServicePersonalUrl;
+    @Value(&quot;${recommendPostServicePersonalUrl}&quot;)
+    String recommendPostServicePersonalUrl;
+
+    @Autowired
+    MemberRepository memberRepository;
+    @Autowired
+    FeedsRepository feedsRepository;
+    @Autowired
+    TagsRepository tagsRepository;
+    @Autowired
+    FilesRepository filesRepository;
+    @Autowired
+    AccountRepository accountRepository;
+    @Autowired
+    FeedCommentRepository feedCommentRepository;
+    @Autowired
+    FeedLikerRepository feedLikerRepository;
+    @Autowired
+    MemberScrapFeedsRepository memberScrapFeedsRepository;
+    @Autowired
+    FeedMemberTagRespository feedMemberTagRespository;
+    @Autowired
+    FeedsService feedsService;
+
+    @Override
+    public ResponseEntity&lt;Object&gt; tagRecommendMobile(PersonalRecommendationTag personalRecommendationTag, HttpServletResponse response) {
+<span class="nc" id="L75">        return this.getRecommend(this.apiUrl, this.recommendTagMobileServicePersonalUrl, personalRecommendationTag,personalRecommendationTag.getUserId());</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;Object&gt; tagRecommendPC(PersonalRecommendationTag personalRecommendationTag, HttpServletResponse response) {
+<span class="nc" id="L80">        return this.getRecommend(this.apiUrl, this.recommendTagPcServicePersonalUrl, personalRecommendationTag,personalRecommendationTag.getUserId());</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;Object&gt; userRecommendMobile(PersonalRecommendationUser personalRecommendationUser, HttpServletResponse response) {
+<span class="nc" id="L85">        return this.getRecommend(this.apiUrl, this.recommendUserMobileServicePersonalUrl, personalRecommendationUser,personalRecommendationUser.getUserId());</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;Object&gt; userRecommendPC(PersonalRecommendationUser personalRecommendationUser, HttpServletResponse response) {
+<span class="nc" id="L90">        return this.getRecommend(this.apiUrl, this.recommendUserPcServicePersonalUrl, personalRecommendationUser,personalRecommendationUser.getUserId());</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;Object&gt; postRecommend(PersonalRecommendationPost personalRecommendationPost, HttpServletResponse response) {
+<span class="nc" id="L95">        return this.getRecommend(this.apiUrl, this.recommendPostServicePersonalUrl, personalRecommendationPost,personalRecommendationPost.getUserId());</span>
+    }
+
+    private ResponseEntity&lt;Object&gt; getRecommend(String apiUrl, String recommendUrl, Object object,int memberIdx){
+<span class="nc" id="L99">        RecommendResultData resultData = null;</span>
+        try{
+<span class="nc" id="L101">            resultData = requestRecommend(apiUrl + recommendUrl,object, RecommendResultData.class);</span>
+<span class="nc" id="L102">        }catch(Exception e){</span>
+<span class="nc" id="L103">            return ResponseEntityUtil.makeResultError(ErrorMessages.SYSTEM_DB_FIND_FAIL.getCode());</span>
+<span class="nc" id="L104">        }</span>
+<span class="nc" id="L105">        return ResponseEntityUtil.makeResultSuccess(loadRealDatas(resultData,recommendUrl,memberIdx));</span>
+    }
+
+    private &lt;T&gt; T requestRecommend(String path, Object data, Class&lt;T&gt; type) throws Exception {
+<span class="nc" id="L109">        StringBuffer responseString = new StringBuffer();</span>
+        /**
+         * 추천API에서 데이터 가져오기
+         */
+<span class="nc" id="L113">        String jsonData = new ObjectMapper().writeValueAsString(data);</span>
+<span class="nc" id="L114">        byte[] jsonDataBytes = jsonData.getBytes(&quot;UTF-8&quot;);</span>
+<span class="nc" id="L115">        URL url = new URL(path);</span>
+<span class="nc" id="L116">        HttpURLConnection con = (HttpURLConnection) url.openConnection();</span>
+<span class="nc" id="L117">        con.setRequestMethod(&quot;POST&quot;);</span>
+<span class="nc" id="L118">        con.setRequestProperty(&quot;Content-Type&quot;, &quot;application/json&quot;);</span>
+<span class="nc" id="L119">        con.setRequestProperty(&quot;Content-Length&quot;,String.valueOf(jsonDataBytes.length));</span>
+<span class="nc" id="L120">        con.setDoOutput(true);</span>
+<span class="nc" id="L121">        con.getOutputStream().write(jsonDataBytes);</span>
+<span class="nc" id="L122">        int responseCode = con.getResponseCode();</span>
+<span class="nc" id="L123">        BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream()));;</span>
+        String inputLine;
+<span class="nc bnc" id="L125" title="All 2 branches missed.">        while ((inputLine = br.readLine()) != null) {</span>
+<span class="nc" id="L126">            responseString.append(inputLine);</span>
+        }
+<span class="nc" id="L128">        br.close();</span>
+<span class="nc" id="L129">        con.disconnect();</span>
+
+        /**
+         * 추천 데이터 파싱
+         */
+<span class="nc" id="L134">        return new ObjectMapper().readValue(responseString.toString(),type);</span>
+    }
+
+    private Map&lt;String,Object&gt; loadRealDatas(RecommendResultData recommendResultData,String typePath,int filterUser){
+<span class="nc" id="L138">        log.info(&quot;resultData : &quot;+recommendResultData.toString());</span>
+<span class="nc" id="L139">        Map&lt;String,Object&gt; resultDatas = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L140">        List&lt;MemberObj&gt; memberList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L141">        List&lt;Feeds&gt; feedsList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L142">        List&lt;ResponseMyFeeds&gt; feedsResultList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L143">        List&lt;Tags&gt; tagsList = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L144" title="All 2 branches missed.">        if(recommendResultData!=null){</span>
+<span class="nc bnc" id="L145" title="All 4 branches missed.">            if(recommendResultData.getUsers()!=null &amp;&amp; recommendResultData.getUsers().size()&gt;0){</span>
+<span class="nc" id="L146">                memberList = memberRepository.findByIdxMulti2(recommendResultData.getUsers());</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">                for(MemberObj memberObj : memberList){</span>
+<span class="nc bnc" id="L148" title="All 2 branches missed.">                    if(memberObj.getFileIdx()&gt;0){</span>
+<span class="nc" id="L149">                        memberObj.setProfileInfo(filesRepository.findByIdx(memberObj.getFileIdx()));</span>
+                    }
+<span class="nc" id="L151">                }</span>
+            }else{
+<span class="nc bnc" id="L153" title="All 2 branches missed.">                if(typePath.equals(this.recommendUserMobileServicePersonalUrl) ||</span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">                        typePath.equals(this.recommendUserPcServicePersonalUrl)){</span>
+<span class="nc" id="L155">                    int limit = 4;</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed.">                    if(typePath.equals(this.recommendUserMobileServicePersonalUrl))</span>
+<span class="nc" id="L157">                        limit = 6;</span>
+<span class="nc" id="L158">                    memberList = memberRepository.findByFollowerTopList(limit);</span>
+<span class="nc bnc" id="L159" title="All 2 branches missed.">                    for(MemberObj memberObj : memberList){</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">                        if(memberObj.getFileIdx()&gt;0){</span>
+<span class="nc" id="L161">                            memberObj.setProfileInfo(filesRepository.findByIdx(memberObj.getFileIdx()));</span>
+                        }
+<span class="nc" id="L163">                    }</span>
+                }
+            }
+
+<span class="nc bnc" id="L167" title="All 4 branches missed.">            if(recommendResultData.getPosts()!=null &amp;&amp; recommendResultData.getPosts().size()&gt;0){</span>
+<span class="nc" id="L168">                feedsList = feedsRepository.findFeedsByIdxMulti2(recommendResultData.getPosts());</span>
+<span class="nc" id="L169">                FindFeedsListObj findFeedsListObj = new FindFeedsListObj();</span>
+<span class="nc" id="L170">                findFeedsListObj.setUIdx(filterUser);</span>
+<span class="nc" id="L171">                feedsResultList = feedInfofind(findFeedsListObj,feedsList);</span>
+            }else{
+            }
+
+<span class="nc bnc" id="L175" title="All 4 branches missed.">            if(recommendResultData.getTags()!=null &amp;&amp; recommendResultData.getTags().size()&gt;0){</span>
+<span class="nc" id="L176">                tagsList = recommendResultData.getTags();</span>
+            }else{
+<span class="nc bnc" id="L178" title="All 2 branches missed.">                if(typePath.equals(this.recommendTagMobileServicePersonalUrl) ||</span>
+<span class="nc bnc" id="L179" title="All 2 branches missed.">                        typePath.equals(this.recommendTagPcServicePersonalUrl))</span>
+<span class="nc" id="L180">                    tagsList = tagsRepository.findTopTagsOnRandom();</span>
+            }
+
+<span class="nc" id="L183">            resultDatas.put(&quot;memberInfo&quot;,memberList);</span>
+<span class="nc" id="L184">            resultDatas.put(&quot;feedsList&quot;,feedsResultList);</span>
+<span class="nc" id="L185">            resultDatas.put(&quot;tagsList&quot;,tagsList);</span>
+        }
+<span class="nc" id="L187">        return resultDatas;</span>
+    }
+
+    private List&lt;ResponseMyFeeds&gt; feedInfofind(FindFeedsListObj feeds, List&lt;Feeds&gt; finded){
+        //return object
+<span class="nc" id="L192">        List&lt;ResponseMyFeeds&gt; myFeedsArrayList = new ArrayList&lt;&gt;();</span>
+
+<span class="nc bnc" id="L194" title="All 2 branches missed.">        for(Feeds feeds1 : finded){</span>
+<span class="nc" id="L195">            ResponseMyFeeds responseMyFeeds = new ResponseMyFeeds();</span>
+<span class="nc" id="L196">            BeanUtils.copyProperties(feeds1, responseMyFeeds);</span>
+
+            // 사용자 정보
+<span class="nc" id="L199">            Member member = this.memberRepository.findByIdx(feeds1.getUIdx());</span>
+<span class="nc" id="L200">            responseMyFeeds.setMember(member);</span>
+<span class="nc" id="L201">            Files memberProfile = this.filesRepository.findByIdx(member.getFileIdx());</span>
+<span class="nc" id="L202">            responseMyFeeds.setMemberProfile(memberProfile);</span>
+
+            // 계정 정보
+<span class="nc" id="L205">            Account account = this.accountRepository.findByUserIdx(member.getIdx());</span>
+<span class="nc" id="L206">            responseMyFeeds.setAccount(account);</span>
+
+            // 피드의 코멘트 정보
+<span class="nc" id="L209">            List&lt;ResponseFeedComment&gt; responseFeedCommentList = this.feedCommentRepository.findByFeedsIdxOnResonse(feeds1.getIdx());</span>
+<span class="nc bnc" id="L210" title="All 2 branches missed.">            for(ResponseFeedComment responseFeedComment : responseFeedCommentList){</span>
+<span class="nc" id="L211">                Member member2 = this.memberRepository.findByIdx(responseFeedComment.getUIdx());</span>
+<span class="nc" id="L212">                Files memberProfile2 = this.filesRepository.findByIdx(member2.getFileIdx());</span>
+<span class="nc" id="L213">                responseFeedComment.setMember(member2);</span>
+<span class="nc" id="L214">                responseFeedComment.setFiles(memberProfile2);</span>
+<span class="nc" id="L215">            }</span>
+<span class="nc" id="L216">            responseMyFeeds.setComments(responseFeedCommentList);</span>
+<span class="nc" id="L217">            responseMyFeeds.setCommentCount(responseFeedCommentList.size());</span>
+
+<span class="nc" id="L219">            Boolean meLikeCheck = false;</span>
+<span class="nc" id="L220">            Boolean meCommentCheck = false;</span>
+<span class="nc" id="L221">            Boolean meScrapCheck = false;</span>
+            // 피드의 좋아요 정보
+<span class="nc" id="L223">            List&lt;FeedLiker&gt; likers = this.feedLikerRepository.findByFeedsIdx(feeds1.getIdx());</span>
+<span class="nc bnc" id="L224" title="All 2 branches missed.">            for(FeedLiker feedLiker : likers){</span>
+<span class="nc bnc" id="L225" title="All 2 branches missed.">                if(feedLiker.getUIdx() == feeds.getIdx()){</span>
+<span class="nc" id="L226">                    meLikeCheck = true;</span>
+                }
+<span class="nc" id="L228">            }</span>
+<span class="nc" id="L229">            responseMyFeeds.setMeLikeCheck(meLikeCheck);</span>
+<span class="nc" id="L230">            responseMyFeeds.setLikers(likers);</span>
+<span class="nc" id="L231">            responseMyFeeds.setLikeCount(likers.size());</span>
+
+            // 피드의 스크랍 여부 정보
+<span class="nc" id="L234">            List&lt;MemberScrapFeeds&gt; scrapFeeds = this.memberScrapFeedsRepository.findByFeedIdx(feeds1.getIdx());</span>
+<span class="nc bnc" id="L235" title="All 2 branches missed.">            for(MemberScrapFeeds memberScrapFeeds : scrapFeeds){</span>
+<span class="nc bnc" id="L236" title="All 2 branches missed.">                if(memberScrapFeeds.getUIdx() == feeds.getIdx()){</span>
+<span class="nc" id="L237">                    meScrapCheck = true;</span>
+                }
+<span class="nc" id="L239">            }</span>
+
+<span class="nc" id="L241">            Feeds feeds2 = new Feeds();</span>
+<span class="nc" id="L242">            feeds2.setIdx(feeds1.getIdx());</span>
+<span class="nc" id="L243">            feeds2.setUIdx(feeds.getUIdx());</span>
+
+
+<span class="nc" id="L246">            int checkComment = this.feedCommentRepository.findMyCommentByFeedIdxAndUidx(feeds2);</span>
+<span class="nc bnc" id="L247" title="All 2 branches missed.">            if(checkComment &gt; 0){</span>
+<span class="nc" id="L248">                meCommentCheck = true;</span>
+            }
+<span class="nc" id="L250">            log.info(&quot;meCommentCheck==&quot;+meCommentCheck.toString());</span>
+<span class="nc" id="L251">            responseMyFeeds.setMeCommentCheck(meCommentCheck);</span>
+
+<span class="nc" id="L253">            responseMyFeeds.setMeScrapCheck(meScrapCheck);</span>
+<span class="nc" id="L254">            responseMyFeeds.setScraps(scrapFeeds);</span>
+<span class="nc" id="L255">            responseMyFeeds.setScrapCount(scrapFeeds.size());</span>
+
+<span class="nc" id="L257">            responseMyFeeds.setMeCommentCheck(meCommentCheck);</span>
+
+            // 파일정보
+<span class="nc" id="L260">            List&lt;Files&gt; files = this.filesRepository.findByFeedIdx(feeds1.getIdx());</span>
+<span class="nc" id="L261">            responseMyFeeds.setFiles(files);</span>
+<span class="nc" id="L262">            responseMyFeeds.setFileCount(files.size());</span>
+
+            // 피드연관 태그 정보getMyFeedsList
+<span class="nc" id="L265">            List&lt;Tags&gt; findTags = this.tagsRepository.findByFeedIdx(feeds1.getIdx());</span>
+<span class="nc" id="L266">            responseMyFeeds.setFeedTags(findTags);</span>
+
+            // 피드연관 팔로워의 게시물
+<span class="nc" id="L269">            List&lt;Member&gt; findFeedMemberTags = this.feedMemberTagRespository.findByFeedIdx(feeds1.getIdx());</span>
+<span class="nc" id="L270">            responseMyFeeds.setFeedMemberTag(findFeedMemberTags);</span>
+
+<span class="nc" id="L272">            FindFeedsListObj save = new FindFeedsListObj();</span>
+<span class="nc" id="L273">            save.setIdx(feeds1.getIdx());</span>
+<span class="nc" id="L274">            log.info(&quot;feeds===&quot;+feeds1.getIdx());</span>
+<span class="nc" id="L275">            List&lt;FeedComment&gt; parents = this.feedCommentRepository.findParentCommnetByFeedsIdxOrderByIdxAsc(save);</span>
+<span class="nc" id="L276">            log.info(&quot;commentSize===&quot;+parents.size());</span>
+<span class="nc" id="L277">            responseMyFeeds.setCommentList(this.feedsService.makeCommentList(save, parents, false));</span>
+<span class="nc" id="L278">            myFeedsArrayList.add(responseMyFeeds);</span>
+<span class="nc" id="L279">        }</span>
+<span class="nc" id="L280">        return myFeedsArrayList;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

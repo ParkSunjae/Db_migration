@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Code coverage report for src/components/Bootstrap.vue</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../prettify.css" />
+    <link rel="stylesheet" href="../../base.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+<body>
+<div class='wrapper'>
+  <div class='pad1'>
+    <h1>
+      <a href="../../index.html">All files</a> / <a href="index.html">src/components</a> Bootstrap.vue
+    </h1>
+    <div class='clearfix'>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">0% </span>
+        <span class="quiet">Statements</span>
+        <span class='fraction'>0/11</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">100% </span>
+        <span class="quiet">Branches</span>
+        <span class='fraction'>0/0</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">0% </span>
+        <span class="quiet">Functions</span>
+        <span class='fraction'>0/4</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">0% </span>
+        <span class="quiet">Lines</span>
+        <span class='fraction'>0/11</span>
+      </div>
+    </div>
+  </div>
+  <div class='status-line low'></div>
+<pre><table class="coverage">
+<tr><td class="line-count quiet">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">&lt;template&gt;
+  &lt;div class="bootstrap"&gt;
+    &lt;h1&gt;{{ msg }}&lt;/h1&gt;
+    &lt;h5&gt;REST service call are easy to do with Vue.js, if you know how to do it.&lt;/h5&gt;
+    &lt;p&gt;&lt;/p&gt;
+    &lt;h6&gt;&lt;b-badge variant="primary"&gt; Let´s go!&lt;/b-badge&gt; Call a Spring Boot REST backend service, by clicking a button:&lt;/h6&gt;
+    &lt;p&gt;&lt;/p&gt;
+    &lt;b-btn variant="success" @click="callRestService(); showResponse=true" id="btnCallHello"&gt;/hello (GET)&lt;/b-btn&gt;
+    &lt;p&gt;&lt;/p&gt;
+    &lt;h4&gt;Backend response: &lt;b-alert :show="showResponse" dismissible @dismissed="showResponse=false"&gt;{{ response }}&lt;/b-alert&gt;&lt;/h4&gt;
+&nbsp;
+    &lt;b-btn v-b-toggle.collapse1&gt;Show Response details&lt;/b-btn&gt;
+    &lt;p&gt;&lt;/p&gt;
+    &lt;b-collapse id="collapse1" class="mt-2"&gt;
+      &lt;b-card&gt;
+        &lt;p class="card-text"&gt;The Response hat this details&lt;/p&gt;
+        &lt;b-btn v-b-toggle.collapse1_inner size="sm" variant="primary"&gt;HTTP Status&lt;/b-btn&gt;
+        &lt;b-collapse id=collapse1_inner class="mt-2"&gt;
+          &lt;b-card&gt;Status: {{ httpStatusCode }}&lt;/b-card&gt;
+          &lt;b-card&gt;Statustext: {{ httpStatusText }}&lt;/b-card&gt;
+        &lt;/b-collapse&gt;
+&nbsp;
+        &lt;b-btn v-b-toggle.collapse2_inner size="sm" id="btnHttpHeaders" variant="warning"&gt;HTTP Headers&lt;/b-btn&gt;
+        &lt;b-collapse id=collapse2_inner class="mt-2"&gt;
+&nbsp;
+          &lt;p v-if="headers &amp;&amp; headers.length"&gt;
+            &lt;li v-for="header of headers"&gt;
+            &lt;b-card&gt;Header: {{ header.valueOf() }}&lt;/b-card&gt;
+            &lt;/li&gt;
+          &lt;/p&gt;
+        &lt;/b-collapse&gt;
+&nbsp;
+        &lt;b-btn v-b-toggle.collapse3_inner size="sm" variant="danger"&gt;Full Request configuration&lt;/b-btn&gt;
+        &lt;b-collapse id=collapse3_inner class="mt-2"&gt;
+          &lt;p class="card-text"&gt;Config: {{ fullResponse.config }} &lt;/p&gt;
+        &lt;/b-collapse&gt;
+      &lt;/b-card&gt;
+    &lt;/b-collapse&gt;
+&nbsp;
+&nbsp;
+    &lt;b-tooltip target="btnHttpHeaders" title="You should always know your HTTP Headers!"&gt;&lt;/b-tooltip&gt;
+&nbsp;
+  &lt;/div&gt;
+&lt;/template&gt;
+&nbsp;
+&lt;script&gt;
+// import axios from 'axios'
+<span class="cstat-no" title="statement not covered" >import {AXIOS} from './http-common'</span>
+&nbsp;
+export default {
+  name: 'bootstrap',
+&nbsp;
+<span class="fstat-no" title="function not covered" >  data () {</span>
+<span class="cstat-no" title="statement not covered" >    return {</span>
+      msg: 'HowTo call REST-Services:',
+      showResponse: false,
+      response: '',
+      fullResponse: {
+        config: {
+          foo: '',
+          bar: ''
+        }
+      },
+      httpStatusCode: '',
+      httpStatusText: '',
+      headers: ['Noting here atm. Did you call the Service?'],
+      errors: []
+    }
+  },
+  methods: {
+    // Fetches posts when the component is created.
+<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >    callRestService () {</span></span>
+<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >      AXIOS.get(`/hello`)</span></span>
+        .then(response =&gt; {
+          // JSON responses are automatically parsed.
+<span class="cstat-no" title="statement not covered" >          this.response = response.data</span>
+<span class="cstat-no" title="statement not covered" >          console.log(response.data)</span>
+<span class="cstat-no" title="statement not covered" >          this.httpStatusCode = response.status</span>
+<span class="cstat-no" title="statement not covered" >          this.httpStatusText = response.statusText</span>
+<span class="cstat-no" title="statement not covered" >          this.headers = response.headers</span>
+<span class="cstat-no" title="statement not covered" >          this.fullResponse = response</span>
+<span class="fstat-no" title="function not covered" >        })</span>
+        .catch(e =&gt; {
+<span class="cstat-no" title="statement not covered" >          this.errors.push(e)</span>
+        })
+    }
+  }
+}
+&nbsp;
+&lt;/script&gt;
+&nbsp;
+&nbsp;
+&lt;!-- Add "scoped" attribute to limit CSS to this component only --&gt;
+&lt;style scoped&gt;
+p {
+  margin-bottom: 20px;
+}
+&nbsp;
+h1, h2 {
+  font-weight: normal;
+}
+&nbsp;
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+&nbsp;
+li {
+  display: inline-block;
+  margin: 0 10px;
+}
+&nbsp;
+a {
+  color: #42b983;
+}
+&lt;/style&gt;
+&nbsp;</pre></td></tr>
+</table></pre>
+<div class='push'></div><!-- for sticky footer -->
+</div><!-- /wrapper -->
+<div class='footer quiet pad2 space-top1 center small'>
+  Code coverage
+  generated by <a href="https://istanbul.js.org/" target="_blank">istanbul</a> at Fri Oct 05 2018 14:55:39 GMT+0900 (Korean Standard Time)
+</div>
+</div>
+<script src="../../prettify.js"></script>
+<script>
+window.onload = function () {
+        if (typeof prettyPrint === 'function') {
+            prettyPrint();
+        }
+};
+</script>
+<script src="../../sorter.js"></script>
+</body>
+</html>

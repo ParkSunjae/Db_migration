@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BusinessCategory2ServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">backend</a> &gt; <a href="index.source.html" class="el_package">kr.co.kyobo.vora.service.businessCategory2</a> &gt; <span class="el_source">BusinessCategory2ServiceImpl.java</span></div><h1>BusinessCategory2ServiceImpl.java</h1><pre class="source lang-java linenums">package kr.co.kyobo.vora.service.businessCategory2;
+
+import kr.co.kyobo.vora.model.api.ResponseEntityUtil;
+import kr.co.kyobo.vora.model.database.BusinessCategory2;
+import kr.co.kyobo.vora.repository.BusinessCategory2Repository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashMap;
+import java.util.Map;
+
+<span class="nc" id="L15">@Slf4j</span>
+@Service
+@Transactional
+<span class="nc" id="L18">public class BusinessCategory2ServiceImpl implements BusinessCategory2Service {</span>
+
+    @Autowired
+    BusinessCategory2Repository businessCategory2Repository;
+
+    @Override
+    public ResponseEntity&lt;Object&gt; getListByParentIdx(BusinessCategory2 businessCategory2) {
+<span class="nc" id="L25">        Map&lt;String, Object&gt; result = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L26">        result.put(&quot;businessCategory2List&quot;,businessCategory2Repository.findByParentIdx(businessCategory2));</span>
+<span class="nc" id="L27">        return ResponseEntityUtil.makeResultSuccess(result);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

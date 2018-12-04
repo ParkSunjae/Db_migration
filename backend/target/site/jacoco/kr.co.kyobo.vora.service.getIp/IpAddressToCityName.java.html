@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>IpAddressToCityName.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">backend</a> &gt; <a href="index.source.html" class="el_package">kr.co.kyobo.vora.service.getIp</a> &gt; <span class="el_source">IpAddressToCityName.java</span></div><h1>IpAddressToCityName.java</h1><pre class="source lang-java linenums">package kr.co.kyobo.vora.service.getIp;
+
+import kr.co.kyobo.vora.common.CommonUtils;
+import kr.co.kyobo.vora.model.database.IpToCity;
+import kr.co.kyobo.vora.repository.IpTocityResporitoy;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.*;
+import java.net.URL;
+import java.nio.charset.Charset;
+
+@Service
+<span class="nc" id="L18">public class IpAddressToCityName {</span>
+
+    @Value(&quot;${ip.to.city.access.key}&quot;)
+    private String ipCityAccesskey;
+
+    public static final String CALL_CITY_NAME1 = &quot;https://api.ip2location.com/?key=&quot;;
+    public static final String CALL_CITY_NAME2 = &quot;&amp;package=WS3&amp;format=json&amp;ip=&quot;;
+
+    @Autowired
+    public IpTocityResporitoy ipTocityResporitoy;
+
+    public String callCityName(HttpServletRequest request) throws IOException {
+<span class="nc" id="L30">        String ip = CommonUtils.checkIp(request);</span>
+
+        //check already search ip
+<span class="nc" id="L33">        IpToCity finded = this.ipTocityResporitoy.findByIpCity(ip);</span>
+
+<span class="nc bnc" id="L35" title="All 2 branches missed.">        if(finded != null){</span>
+<span class="nc" id="L36">            return this.changeCityName(finded.getCityName());</span>
+        }else{
+<span class="nc" id="L38">            JSONObject json = readJsonFromUrl(CALL_CITY_NAME1 + ipCityAccesskey + CALL_CITY_NAME2 + ip );</span>
+
+<span class="nc" id="L40">            IpToCity saveCity = new IpToCity();</span>
+<span class="nc" id="L41">            saveCity.setIp(ip);</span>
+<span class="nc" id="L42">            saveCity.setCityName((String) json.get(&quot;city_name&quot;));</span>
+<span class="nc" id="L43">            saveCity.setContryCode((String) json.get(&quot;country_code&quot;));</span>
+<span class="nc" id="L44">            saveCity.setContryName((String) json.get(&quot;country_name&quot;));</span>
+<span class="nc" id="L45">            saveCity.setRegionName((String) json.get(&quot;region_name&quot;));</span>
+<span class="nc" id="L46">            this.ipTocityResporitoy.insertIptoCity(saveCity);</span>
+<span class="nc" id="L47">            return this.changeCityName((String) json.get(&quot;city_name&quot;));</span>
+        }
+
+    }
+
+    private static String readAll(Reader rd) throws IOException {
+<span class="nc" id="L53">        StringBuilder sb = new StringBuilder();</span>
+        int cp;
+<span class="nc bnc" id="L55" title="All 2 branches missed.">        while ((cp = rd.read()) != -1) {</span>
+<span class="nc" id="L56">            sb.append((char) cp);</span>
+        }
+<span class="nc" id="L58">        return sb.toString();</span>
+    }
+
+    public static JSONObject readJsonFromUrl(String url) throws IOException, JSONException {
+<span class="nc" id="L62">        InputStream is = new URL(url).openStream();</span>
+        try {
+<span class="nc" id="L64">            BufferedReader rd = new BufferedReader(new InputStreamReader(is, Charset.forName(&quot;UTF-8&quot;)));</span>
+<span class="nc" id="L65">            String jsonText = readAll(rd);</span>
+<span class="nc" id="L66">            JSONObject json = new JSONObject(jsonText);</span>
+<span class="nc" id="L67">            return json;</span>
+        } finally {
+<span class="nc" id="L69">            is.close();</span>
+<span class="nc" id="L70">        }</span>
+    }
+
+    private String changeCityName(String cityNameC){
+<span class="nc" id="L74">        String cityName = &quot;&quot;;</span>
+<span class="nc bnc" id="L75" title="All 194 branches missed.">        switch (cityNameC) {</span>
+            case &quot;Seoul&quot; :
+<span class="nc" id="L77">                cityName = &quot;서울&quot;;</span>
+<span class="nc" id="L78">                break;</span>
+            case &quot;Suwon&quot; :
+<span class="nc" id="L80">                cityName = &quot;수원&quot;;</span>
+<span class="nc" id="L81">                break;</span>
+            case &quot;Incheon&quot; :
+<span class="nc" id="L83">                cityName = &quot;인천&quot;;</span>
+<span class="nc" id="L84">                break;</span>
+            case &quot;Anyang&quot; :
+<span class="nc" id="L86">                cityName = &quot;안양&quot;;</span>
+<span class="nc" id="L87">                break;</span>
+            case &quot;Seongnam&quot; :
+<span class="nc" id="L89">                cityName = &quot;성남&quot;;</span>
+<span class="nc" id="L90">                break;</span>
+            case &quot;Osan&quot; :
+<span class="nc" id="L92">                cityName = &quot;오산&quot;;</span>
+<span class="nc" id="L93">                break;</span>
+            case &quot;Chuncheon&quot; :
+<span class="nc" id="L95">                cityName = &quot;춘천&quot;;</span>
+<span class="nc" id="L96">                break;</span>
+            case &quot;Wonju&quot; :
+<span class="nc" id="L98">                cityName = &quot;원주&quot;;</span>
+<span class="nc" id="L99">                break;</span>
+            case &quot;Cheorwon&quot; :
+<span class="nc" id="L101">                cityName = &quot;철원&quot;;</span>
+<span class="nc" id="L102">                break;</span>
+            case &quot;Yeongwol&quot; :
+<span class="nc" id="L104">                cityName = &quot;영월&quot;;</span>
+<span class="nc" id="L105">                break;</span>
+            case &quot;Yangyang&quot; :
+<span class="nc" id="L107">                cityName = &quot;양양&quot;;</span>
+<span class="nc" id="L108">                break;</span>
+            case &quot;Sokcho&quot; :
+<span class="nc" id="L110">                cityName = &quot;속초&quot;;</span>
+<span class="nc" id="L111">                break;</span>
+            case &quot;Donghae&quot; :
+<span class="nc" id="L113">                cityName = &quot;동해&quot;;</span>
+<span class="nc" id="L114">                break;</span>
+            case &quot;Gangneung&quot; :
+<span class="nc" id="L116">                cityName = &quot;강릉&quot;;</span>
+<span class="nc" id="L117">                break;</span>
+            case &quot;Daegwallyeong&quot; :
+<span class="nc" id="L119">                cityName = &quot;대관령&quot;;</span>
+<span class="nc" id="L120">                break;</span>
+            case &quot;Chungju&quot; :
+<span class="nc" id="L122">                cityName = &quot;충주&quot;;</span>
+<span class="nc" id="L123">                break;</span>
+            case &quot;Chupungnyeong&quot; :
+<span class="nc" id="L125">                cityName = &quot;추풍령&quot;;</span>
+<span class="nc" id="L126">                break;</span>
+            case &quot;Cheonan&quot; :
+<span class="nc" id="L128">                cityName = &quot;천안&quot;;</span>
+<span class="nc" id="L129">                break;</span>
+            case &quot;Seosan&quot; :
+<span class="nc" id="L131">                cityName = &quot;서산&quot;;</span>
+<span class="nc" id="L132">                break;</span>
+            case &quot;Daejeon&quot; :
+<span class="nc" id="L134">                cityName = &quot;대전&quot;;</span>
+<span class="nc" id="L135">                break;</span>
+            case &quot;Geunsan&quot; :
+<span class="nc" id="L137">                cityName = &quot;금산&quot;;</span>
+<span class="nc" id="L138">                break;</span>
+            case &quot;Jeonju&quot; :
+<span class="nc" id="L140">                cityName = &quot;전주&quot;;</span>
+<span class="nc" id="L141">                break;</span>
+            case &quot;Iksan&quot; :
+<span class="nc" id="L143">                cityName = &quot;익산&quot;;</span>
+<span class="nc" id="L144">                break;</span>
+            case &quot;Mokpo&quot; :
+<span class="nc" id="L146">                cityName = &quot;목포&quot;;</span>
+<span class="nc" id="L147">                break;</span>
+            case &quot;Haenam&quot; :
+<span class="nc" id="L149">                cityName = &quot;해남&quot;;</span>
+<span class="nc" id="L150">                break;</span>
+            case &quot;Gwangju&quot; :
+<span class="nc" id="L152">                cityName = &quot;광주&quot;;</span>
+<span class="nc" id="L153">                break;</span>
+            case &quot;Yeosu&quot; :
+<span class="nc" id="L155">                cityName = &quot;여수&quot;;</span>
+<span class="nc" id="L156">                break;</span>
+            case &quot;Wan-do&quot; :
+<span class="nc" id="L158">                cityName = &quot;완도&quot;;</span>
+<span class="nc" id="L159">                break;</span>
+            case &quot;Beolgyo&quot; :
+<span class="nc" id="L161">                cityName = &quot;벌교&quot;;</span>
+<span class="nc" id="L162">                break;</span>
+            case &quot;Gimcheon&quot; :
+<span class="nc" id="L164">                cityName = &quot;김천&quot;;</span>
+<span class="nc" id="L165">                break;</span>
+            case &quot;Daegu&quot; :
+<span class="nc" id="L167">                cityName = &quot;대구&quot;;</span>
+<span class="nc" id="L168">                break;</span>
+            case &quot;Ulleung-do&quot; :
+<span class="nc" id="L170">                cityName = &quot;울릉도&quot;;</span>
+<span class="nc" id="L171">                break;</span>
+            case &quot;Waegwan&quot; :
+<span class="nc" id="L173">                cityName = &quot;왜관&quot;;</span>
+<span class="nc" id="L174">                break;</span>
+            case &quot;Andong&quot; :
+<span class="nc" id="L176">                cityName = &quot;안동&quot;;</span>
+<span class="nc" id="L177">                break;</span>
+            case &quot;Pohang&quot; :
+<span class="nc" id="L179">                cityName = &quot;포항&quot;;</span>
+<span class="nc" id="L180">                break;</span>
+            case &quot;Uiseong&quot; :
+<span class="nc" id="L182">                cityName = &quot;의성&quot;;</span>
+<span class="nc" id="L183">                break;</span>
+            case &quot;Uljin&quot; :
+<span class="nc" id="L185">                cityName = &quot;울진&quot;;</span>
+<span class="nc" id="L186">                break;</span>
+            case &quot;Jinhae&quot; :
+<span class="nc" id="L188">                cityName = &quot;진해&quot;;</span>
+<span class="nc" id="L189">                break;</span>
+            case &quot;Busan&quot; :
+<span class="nc" id="L191">                cityName = &quot;부산&quot;;</span>
+<span class="nc" id="L192">                break;</span>
+            case &quot;Ulsan&quot; :
+<span class="nc" id="L194">                cityName = &quot;울산&quot;;</span>
+<span class="nc" id="L195">                break;</span>
+            case &quot;Miryang&quot; :
+<span class="nc" id="L197">                cityName = &quot;밀양&quot;;</span>
+<span class="nc" id="L198">                break;</span>
+            case &quot;Masan&quot; :
+<span class="nc" id="L200">                cityName = &quot;마산&quot;;</span>
+<span class="nc" id="L201">                break;</span>
+            case &quot;Changwon&quot; :
+<span class="nc" id="L203">                cityName = &quot;창원&quot;;</span>
+<span class="nc" id="L204">                break;</span>
+            case &quot;Tongyeong(Chungmu)&quot; :
+<span class="nc" id="L206">                cityName = &quot;통영(충무)&quot;;</span>
+<span class="nc" id="L207">                break;</span>
+            case &quot;Jinju&quot; :
+<span class="nc" id="L209">                cityName = &quot;진주&quot;;</span>
+<span class="nc" id="L210">                break;</span>
+            case &quot;Jeju&quot; :
+<span class="nc" id="L212">                cityName = &quot;제주&quot;;</span>
+<span class="nc" id="L213">                break;</span>
+            case &quot;Bukjeju&quot; :
+<span class="nc" id="L215">                cityName = &quot;북제주&quot;;</span>
+<span class="nc" id="L216">                break;</span>
+            case &quot;Seogwipo&quot; :
+<span class="nc" id="L218">                cityName = &quot;서귀포&quot;;</span>
+                break;
+        }
+<span class="nc" id="L221">        return cityName;</span>
+    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

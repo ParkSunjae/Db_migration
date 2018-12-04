@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RelationServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">backend</a> &gt; <a href="index.source.html" class="el_package">kr.co.kyobo.vora.service.relation</a> &gt; <span class="el_source">RelationServiceImpl.java</span></div><h1>RelationServiceImpl.java</h1><pre class="source lang-java linenums">package kr.co.kyobo.vora.service.relation;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import kr.co.kyobo.vora.messages.ErrorMessages;
+import kr.co.kyobo.vora.model.api.*;
+import kr.co.kyobo.vora.model.database.Feeds;
+import kr.co.kyobo.vora.model.database.Tags;
+import kr.co.kyobo.vora.model.vo.MemberObj;
+import kr.co.kyobo.vora.model.vo.SuggestMember;
+import kr.co.kyobo.vora.repository.FeedsRepository;
+import kr.co.kyobo.vora.repository.FilesRepository;
+import kr.co.kyobo.vora.repository.MemberRepository;
+import kr.co.kyobo.vora.repository.TagsRepository;
+import kr.co.kyobo.vora.service.feeds.FeedsService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+<span class="nc" id="L32">@Slf4j</span>
+@Service
+@Transactional
+<span class="nc" id="L35">public class RelationServiceImpl implements RelationService {</span>
+    @Value(&quot;${recommendServiceUri}&quot;)
+    String apiUrl;
+    @Value(&quot;${recommendTagRelationTag}&quot;)
+    String recommendTagRelationTag;
+    @Value(&quot;${recommendTagRelationUser}&quot;)
+    String recommendTagRelationUser;
+
+    @Autowired
+    MemberRepository memberRepository;
+    @Autowired
+    FilesRepository filesRepository;
+
+    @Override
+    public ResponseEntity&lt;Object&gt; tagRelationTag(Tags tags, HttpServletResponse response) {
+<span class="nc" id="L50">        return this.getRecommend(this.apiUrl, this.recommendTagRelationTag, tags);</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;Object&gt; tagRelationUser(PersonagesRelatedToEachTagRequest personagesRelatedToEachTagRequest, HttpServletResponse response) {
+<span class="nc" id="L55">        return this.getRecommend(this.apiUrl, this.recommendTagRelationUser, personagesRelatedToEachTagRequest);</span>
+    }
+
+    private ResponseEntity&lt;Object&gt; getRecommend(String apiUrl, String recommendUrl, Object object){
+<span class="nc" id="L59">        RecommendResultData resultData = null;</span>
+        try{
+<span class="nc" id="L61">            resultData = requestRecommend(apiUrl + recommendUrl,object, RecommendResultData.class);</span>
+<span class="nc" id="L62">        }catch(Exception e){</span>
+<span class="nc" id="L63">            e.printStackTrace();</span>
+<span class="nc" id="L64">            return ResponseEntityUtil.makeResultError(ErrorMessages.SYSTEM_DB_FIND_FAIL.getCode());</span>
+<span class="nc" id="L65">        }</span>
+<span class="nc" id="L66">        return ResponseEntityUtil.makeResultSuccess(loadRealDatas(resultData));</span>
+    }
+
+    private &lt;T&gt; T requestRecommend(String path, Object data, Class&lt;T&gt; type) throws Exception {
+<span class="nc" id="L70">        StringBuffer responseString = new StringBuffer();</span>
+        /**
+         * 추천API에서 데이터 가져오기
+         */
+<span class="nc" id="L74">        String jsonData = new ObjectMapper().writeValueAsString(data);</span>
+<span class="nc" id="L75">        log.info(&quot;jsonData : &quot;+jsonData);</span>
+<span class="nc" id="L76">        byte[] jsonDataBytes = jsonData.getBytes(&quot;UTF-8&quot;);</span>
+<span class="nc" id="L77">        URL url = new URL(path);</span>
+<span class="nc" id="L78">        HttpURLConnection con = (HttpURLConnection) url.openConnection();</span>
+<span class="nc" id="L79">        con.setRequestMethod(&quot;POST&quot;);</span>
+<span class="nc" id="L80">        con.setRequestProperty(&quot;Content-Type&quot;, &quot;application/json&quot;);</span>
+<span class="nc" id="L81">        con.setRequestProperty(&quot;Content-Length&quot;,String.valueOf(jsonDataBytes.length));</span>
+<span class="nc" id="L82">        con.setDoOutput(true);</span>
+<span class="nc" id="L83">        con.getOutputStream().write(jsonDataBytes);</span>
+<span class="nc" id="L84">        int responseCode = con.getResponseCode();</span>
+<span class="nc" id="L85">        BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream()));</span>
+        String inputLine;
+<span class="nc bnc" id="L87" title="All 2 branches missed.">        while ((inputLine = br.readLine()) != null) {</span>
+<span class="nc" id="L88">            responseString.append(inputLine);</span>
+        }
+<span class="nc" id="L90">        br.close();</span>
+<span class="nc" id="L91">        con.disconnect();</span>
+        /**
+         * 추천 데이터 파싱
+         */
+<span class="nc" id="L95">        return new ObjectMapper().readValue(responseString.toString(),type);</span>
+    }
+
+    private Map&lt;String,Object&gt; loadRealDatas(RecommendResultData recommendResultData){
+<span class="nc" id="L99">        log.info(&quot;resultData : &quot;+recommendResultData.toString());</span>
+<span class="nc" id="L100">        Map&lt;String,Object&gt; resultDatas = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L101">        List&lt;SuggestMember&gt; memberList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L102">        List&lt;Tags&gt; tagsList = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">        if(recommendResultData!=null){</span>
+<span class="nc bnc" id="L104" title="All 4 branches missed.">            if(recommendResultData.getUsers()!=null &amp;&amp; recommendResultData.getUsers().size()&gt;0){</span>
+<span class="nc" id="L105">                memberList = memberRepository.findBySuggestUserIdxs(recommendResultData.getUsers());</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed.">                for(SuggestMember memberObj : memberList){</span>
+<span class="nc bnc" id="L107" title="All 2 branches missed.">                    if(memberObj.getFileIdx()&gt;0){</span>
+<span class="nc" id="L108">                        memberObj.setProfileInfo(filesRepository.findByIdx(memberObj.getFileIdx()));</span>
+                    }
+<span class="nc" id="L110">                }</span>
+            }
+<span class="nc bnc" id="L112" title="All 4 branches missed.">            if(recommendResultData.getTags()!=null &amp;&amp; recommendResultData.getTags().size()&gt;0){</span>
+<span class="nc" id="L113">                tagsList = recommendResultData.getTags();</span>
+            }
+<span class="nc" id="L115">            resultDatas.put(&quot;memberInfo&quot;,memberList);</span>
+<span class="nc" id="L116">            resultDatas.put(&quot;tagsList&quot;,tagsList);</span>
+        }
+<span class="nc" id="L118">        return resultDatas;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

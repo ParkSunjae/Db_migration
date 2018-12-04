@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CommonUtils.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">backend</a> &gt; <a href="index.source.html" class="el_package">kr.co.kyobo.vora.common</a> &gt; <span class="el_source">CommonUtils.java</span></div><h1>CommonUtils.java</h1><pre class="source lang-java linenums">package kr.co.kyobo.vora.common;
+
+import javax.servlet.http.HttpServletRequest;
+
+<span class="nc" id="L5">public class CommonUtils {</span>
+    public static String checkIp(HttpServletRequest request){
+<span class="nc" id="L7">        String ip = request.getHeader(&quot;X-Forwarded-For&quot;);</span>
+<span class="nc bnc" id="L8" title="All 6 branches missed.">        if (ip == null || ip.length() == 0 || &quot;unknown&quot;.equalsIgnoreCase(ip)) {</span>
+<span class="nc" id="L9">            ip = request.getHeader(&quot;Proxy-Client-IP&quot;);</span>
+        }
+<span class="nc bnc" id="L11" title="All 6 branches missed.">        if (ip == null || ip.length() == 0 || &quot;unknown&quot;.equalsIgnoreCase(ip)) {</span>
+<span class="nc" id="L12">            ip = request.getHeader(&quot;WL-Proxy-Client-IP&quot;);</span>
+        }
+<span class="nc bnc" id="L14" title="All 6 branches missed.">        if (ip == null || ip.length() == 0 || &quot;unknown&quot;.equalsIgnoreCase(ip)) {</span>
+<span class="nc" id="L15">            ip = request.getHeader(&quot;HTTP_CLIENT_IP&quot;);</span>
+        }
+<span class="nc bnc" id="L17" title="All 6 branches missed.">        if (ip == null || ip.length() == 0 || &quot;unknown&quot;.equalsIgnoreCase(ip)) {</span>
+<span class="nc" id="L18">            ip = request.getHeader(&quot;HTTP_X_FORWARDED_FOR&quot;);</span>
+        }
+<span class="nc bnc" id="L20" title="All 6 branches missed.">        if (ip == null || ip.length() == 0 || &quot;unknown&quot;.equalsIgnoreCase(ip)) {</span>
+<span class="nc" id="L21">            ip = request.getRemoteAddr();</span>
+        }
+<span class="nc" id="L23">        return ip;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

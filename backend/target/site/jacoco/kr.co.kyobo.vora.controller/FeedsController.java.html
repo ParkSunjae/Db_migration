@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FeedsController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">backend</a> &gt; <a href="index.source.html" class="el_package">kr.co.kyobo.vora.controller</a> &gt; <span class="el_source">FeedsController.java</span></div><h1>FeedsController.java</h1><pre class="source lang-java linenums">package kr.co.kyobo.vora.controller;
+
+import kr.co.kyobo.vora.common.api.UriEntity;
+import kr.co.kyobo.vora.common.api.UriMethod;
+import kr.co.kyobo.vora.common.api.UriVersion;
+import kr.co.kyobo.vora.model.api.FeedWriteObj;
+import kr.co.kyobo.vora.model.api.RequestComment;
+import kr.co.kyobo.vora.model.database.*;
+import kr.co.kyobo.vora.model.vo.FindFeedsListObj;
+import kr.co.kyobo.vora.service.feeds.FeedsService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+<span class="nc" id="L23">@Slf4j</span>
+@RestController
+<span class="nc" id="L25">public class FeedsController {</span>
+    @Autowired
+    private FeedsService feedsService;
+
+    @PostMapping(path = UriVersion.API_VERSION_PRIVATE + UriEntity.FEEDS + UriMethod.FEEDS_WRITE, consumes = {&quot;multipart/form-data&quot;})
+    public ResponseEntity&lt;Object&gt; postWrite(@ModelAttribute Feeds feeds,
+                                            @RequestParam(value = &quot;locationIdx&quot;, required = false) Integer locationIdx,
+                                            @RequestParam(value = &quot;address&quot;, required = false) String address,
+                                            @RequestParam(value = &quot;category&quot;, required = false) String category,
+                                            @RequestParam(value = &quot;feedIdx&quot;, required = false) Integer feedIdx,
+                                            @RequestParam(value = &quot;description&quot;, required = false) String description,
+                                            @RequestParam(value = &quot;link&quot;, required = false) String link,
+                                            @RequestParam(value = &quot;mapx&quot;, required = false) String mapx,
+                                            @RequestParam(value = &quot;mapy&quot;, required = false) String mapy,
+                                            @RequestParam(value = &quot;roadAddress&quot;, required = false) String roadAddress,
+                                            @RequestParam(value = &quot;title&quot;, required = false) String title,
+                                            @RequestParam(value = &quot;actionTagsBookIdx&quot;, required = false) List&lt;Integer&gt; actionTagsBookIdx,
+                                            @RequestParam(value = &quot;actionTagsMovieIdx&quot;, required = false) List&lt;Integer&gt; actionTagsMovieIdx,
+                                            @RequestParam(value = &quot;actionTagsCultureIdx&quot;, required = false) List&lt;Integer&gt; actionTagsCultureIdx,
+                                            @RequestParam(value = &quot;bookId&quot;, required = false) List&lt;String&gt; bookId,
+                                            @RequestParam(value = &quot;actor&quot;, required = false) List&lt;String&gt; actor,
+                                            @RequestParam(value = &quot;director&quot;, required = false) List&lt;String&gt; director,
+                                            @RequestParam(value = &quot;mImage&quot;, required = false) List&lt;String&gt; mImage,
+                                            @RequestParam(value = &quot;mLink&quot;, required = false) List&lt;String&gt; mLink,
+                                            @RequestParam(value = &quot;pubDate&quot;, required = false) List&lt;String&gt; pubDate,
+                                            @RequestParam(value = &quot;mSubtitle&quot;, required = false) List&lt;String&gt; mSubtitle,
+                                            @RequestParam(value = &quot;mTitle&quot;, required = false) List&lt;String&gt; mTitle,
+                                            @RequestParam(value = &quot;userRating&quot;, required = false) List&lt;String&gt; userRating,
+                                            @RequestParam(value = &quot;cateName1&quot;, required = false) List&lt;String&gt; cateName1,
+                                            @RequestParam(value = &quot;cImage&quot;, required = false) List&lt;String&gt; cImage,
+                                            @RequestParam(value = &quot;cLink&quot;, required = false) List&lt;String&gt; cLink,
+                                            @RequestParam(value = &quot;cLocation&quot;, required = false) List&lt;String&gt; cLocation,
+                                            @RequestParam(value = &quot;startDate&quot;, required = false) List&lt;String&gt; startDate,
+                                            @RequestParam(value = &quot;endDate&quot;, required = false) List&lt;String&gt; endDate,
+                                            @RequestParam(value = &quot;cTitle&quot;, required = false) List&lt;String&gt; cTitle,
+                                            @RequestParam(value = &quot;multipartFiles&quot;, required = false) List&lt;MultipartFile&gt; multipartFiles,
+                                            @RequestParam(value = &quot;tag&quot;, required = false) List&lt;String&gt; tag,
+                                            @RequestParam(value = &quot;tIdx&quot;, required = false) List&lt;Integer&gt; tIdx,
+                                            HttpServletRequest request
+    ) throws IOException {
+
+<span class="nc" id="L66">        FeedLocations feedLocations = new FeedLocations();</span>
+<span class="nc bnc" id="L67" title="All 2 branches missed.">        if (locationIdx != null)</span>
+<span class="nc" id="L68">            feedLocations.setIdx(locationIdx);</span>
+<span class="nc" id="L69">        feedLocations.setAddress(address);</span>
+<span class="nc" id="L70">        feedLocations.setCategory(category);</span>
+<span class="nc" id="L71">        feedLocations.setDescription(description);</span>
+<span class="nc" id="L72">        feedLocations.setLink(link);</span>
+<span class="nc" id="L73">        feedLocations.setMapx(mapx);</span>
+<span class="nc" id="L74">        feedLocations.setMapy(mapy);</span>
+<span class="nc" id="L75">        feedLocations.setRoadAddress(roadAddress);</span>
+<span class="nc" id="L76">        feedLocations.setTitle(title);</span>
+
+<span class="nc" id="L78">        FeedWriteObj savefeedWriteObj = this.makeSaveFeedDataSetters(feeds, feedLocations, bookId, actor, director, mImage, mLink, pubDate, mSubtitle, mTitle, userRating, cateName1, cImage, cLink, cLocation, startDate, endDate, cTitle, multipartFiles, tag, tIdx, locationIdx, actionTagsBookIdx, actionTagsMovieIdx, actionTagsCultureIdx);</span>
+
+<span class="nc" id="L80">        return this.feedsService.writeFeeds(savefeedWriteObj, request);</span>
+    }
+
+    private FeedWriteObj makeSaveFeedDataSetters(Feeds feeds, FeedLocations feedLocations, List&lt;String&gt; bookId, List&lt;String&gt; actor, List&lt;String&gt; director, List&lt;String&gt; mImage, List&lt;String&gt; mLink, List&lt;String&gt; pubDate, List&lt;String&gt; mSubtitle, List&lt;String&gt; mTitle, List&lt;String&gt; userRating, List&lt;String&gt; cateName1, List&lt;String&gt; cImage, List&lt;String&gt; cLink, List&lt;String&gt; cLocation, List&lt;String&gt; startDate, List&lt;String&gt; endDate, List&lt;String&gt; cTitle, List&lt;MultipartFile&gt; multipartFiles, List&lt;String&gt; tag, List&lt;Integer&gt; tIdx, Integer locationIdx, List&lt;Integer&gt; actionTagsBookIdx, List&lt;Integer&gt; actionTagsMovieIdx, List&lt;Integer&gt; actionTagsCultureIdx) {
+<span class="nc" id="L84">        FeedWriteObj feedWriteObj = new FeedWriteObj();</span>
+
+<span class="nc" id="L86">        BeanUtils.copyProperties(feeds, feedWriteObj);</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">        if (feedLocations != null) {</span>
+<span class="nc bnc" id="L88" title="All 2 branches missed.">            if (feedLocations.getAddress() != null) {</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">                if (locationIdx == 0) {</span>
+<span class="nc" id="L90">                    feedWriteObj.setFeedLocations(feedLocations);</span>
+                }
+            }
+        }
+
+<span class="nc" id="L95">        List&lt;ActionTagsBook&gt; saveBooks = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L96">        int cnt = 0;</span>
+<span class="nc bnc" id="L97" title="All 2 branches missed.">        if (bookId != null) {</span>
+<span class="nc bnc" id="L98" title="All 2 branches missed.">            for (String bookIds : bookId) {</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">                if (actionTagsBookIdx.get(cnt) == 0) {</span>
+<span class="nc" id="L100">                    ActionTagsBook actionTagsBook = new ActionTagsBook();</span>
+<span class="nc" id="L101">                    actionTagsBook.setBookId(bookIds);</span>
+<span class="nc" id="L102">                    saveBooks.add(actionTagsBook);</span>
+<span class="nc" id="L103">                    cnt++;</span>
+                }
+<span class="nc" id="L105">            }</span>
+<span class="nc" id="L106">            cnt = 0;</span>
+        }
+<span class="nc" id="L108">        feedWriteObj.setSaveBooks(saveBooks);</span>
+
+
+<span class="nc" id="L111">        List&lt;ActionTagsMovie&gt; saveMovies = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L112" title="All 2 branches missed.">        if (actor != null) {</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">            for (int i = 0; i &lt; actor.size(); i++) {</span>
+<span class="nc bnc" id="L114" title="All 2 branches missed.">                if (actionTagsMovieIdx.get(i) == 0) {</span>
+<span class="nc" id="L115">                    ActionTagsMovie actionTagsMovie = new ActionTagsMovie();</span>
+<span class="nc" id="L116">                    actionTagsMovie.setActor(actor.get(i));</span>
+<span class="nc" id="L117">                    actionTagsMovie.setDirector(director.get(i));</span>
+<span class="nc" id="L118">                    actionTagsMovie.setMImage(mImage.get(i));</span>
+<span class="nc" id="L119">                    actionTagsMovie.setMLink(mLink.get(i));</span>
+<span class="nc" id="L120">                    actionTagsMovie.setMSubtitle(mSubtitle.get(i));</span>
+<span class="nc" id="L121">                    actionTagsMovie.setMTitle(mTitle.get(i));</span>
+<span class="nc" id="L122">                    actionTagsMovie.setPubDate(pubDate.get(i));</span>
+<span class="nc" id="L123">                    actionTagsMovie.setUserRating(userRating.get(i));</span>
+<span class="nc" id="L124">                    saveMovies.add(actionTagsMovie);</span>
+                }
+            }
+        }
+<span class="nc" id="L128">        feedWriteObj.setSaveMovies(saveMovies);</span>
+
+<span class="nc" id="L130">        List&lt;ActionTagsCultureExhibition&gt; saveCulure = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L131" title="All 2 branches missed.">        if (cateName1 != null) {</span>
+<span class="nc bnc" id="L132" title="All 2 branches missed.">            for (int i = 0; i &lt; cateName1.size(); i++) {</span>
+<span class="nc bnc" id="L133" title="All 2 branches missed.">                if (actionTagsCultureIdx.get(i) == 0) {</span>
+<span class="nc" id="L134">                    ActionTagsCultureExhibition actionTagsCultureExhibition = new ActionTagsCultureExhibition();</span>
+<span class="nc" id="L135">                    actionTagsCultureExhibition.setCateName1(cateName1.get(i));</span>
+<span class="nc" id="L136">                    actionTagsCultureExhibition.setCImage(cImage.get(i));</span>
+<span class="nc" id="L137">                    actionTagsCultureExhibition.setCLink(cLink.get(i));</span>
+<span class="nc" id="L138">                    actionTagsCultureExhibition.setCLocation(cLocation.get(i));</span>
+<span class="nc" id="L139">                    actionTagsCultureExhibition.setCTitle(cTitle.get(i));</span>
+<span class="nc" id="L140">                    actionTagsCultureExhibition.setStartDate(startDate.get(i));</span>
+<span class="nc" id="L141">                    actionTagsCultureExhibition.setEndDate(endDate.get(i));</span>
+<span class="nc" id="L142">                    saveCulure.add(actionTagsCultureExhibition);</span>
+                }
+            }
+        }
+<span class="nc" id="L146">        feedWriteObj.setSaveCultureAndExhibition(saveCulure);</span>
+<span class="nc" id="L147">        feedWriteObj.setMultipartFiles(multipartFiles);</span>
+
+<span class="nc" id="L149">        List&lt;Tags&gt; tagsList = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L150" title="All 2 branches missed.">        if (tag != null) {</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">            for (String t : tag) {</span>
+<span class="nc" id="L152">                Tags tags = new Tags();</span>
+<span class="nc" id="L153">                tags.setTag(t);</span>
+<span class="nc" id="L154">                tagsList.add(tags);</span>
+<span class="nc" id="L155">            }</span>
+        }
+<span class="nc" id="L157">        feedWriteObj.setTags(tagsList);</span>
+
+
+<span class="nc" id="L160">        List&lt;FeedMemberTag&gt; followers = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L161" title="All 2 branches missed.">        if (tIdx != null) {</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">            for (Integer idxs : tIdx) {</span>
+<span class="nc" id="L163">                FeedMemberTag feedMemberTag = new FeedMemberTag();</span>
+<span class="nc" id="L164">                feedMemberTag.setUIdx(idxs);</span>
+<span class="nc" id="L165">                followers.add(feedMemberTag);</span>
+<span class="nc" id="L166">            }</span>
+        }
+<span class="nc" id="L168">        feedWriteObj.setFollowers(followers);</span>
+<span class="nc" id="L169">        return feedWriteObj;</span>
+    }
+
+
+    @PostMapping(path = UriVersion.API_VERSION_PRIVATE + UriEntity.FEEDS + UriMethod.FEED_VIEW)
+    public ResponseEntity&lt;Object&gt; getDetailFeed(@RequestBody Feeds feeds) {
+<span class="nc" id="L175">        return this.feedsService.findFeedDetailByIdx(feeds, true);</span>
+    }
+
+    @PostMapping(path = UriVersion.API_VERSION_PRIVATE + UriEntity.FEEDS + UriMethod.FEED_UPDATE_DATA)
+    public ResponseEntity&lt;Object&gt; getSelectedFeed(@RequestBody Feeds feeds) {
+<span class="nc" id="L180">        return this.feedsService.findFeedDetailByIdx(feeds, false);</span>
+    }
+
+    @PostMapping(path = UriVersion.API_VERSION_PRIVATE + UriEntity.FEEDS + UriMethod.FIND_COMMENT_BY_LIKE)
+    public ResponseEntity&lt;Object&gt; getFeedCommentByLike(@RequestBody FindFeedsListObj feeds) {
+<span class="nc" id="L185">        return this.feedsService.findCommentByLikeCount(feeds);</span>
+    }
+
+    @PostMapping(path = UriVersion.API_VERSION_PRIVATE + UriEntity.FEEDS + UriMethod.FIND_COMMENT_BY_NEWS)
+    public ResponseEntity&lt;Object&gt; getFeedCommentByNew(@RequestBody FindFeedsListObj feeds) {
+<span class="nc" id="L190">        return this.feedsService.findCommentByCommentIdx(feeds);</span>
+    }
+
+    @PostMapping(path = UriVersion.API_VERSION_PRIVATE + UriEntity.FEEDS + UriMethod.ADD_FEED_COMMENT)
+    public ResponseEntity&lt;Object&gt; addFeedCommentParent(@RequestBody RequestComment requestComment) {
+<span class="nc" id="L195">        return this.feedsService.addFeedCommentParent(requestComment);</span>
+    }
+
+    @PostMapping(path = UriVersion.API_VERSION_PRIVATE + UriEntity.FEEDS + UriMethod.SET_COMMENT_LIKE_TOGGLE)
+    public ResponseEntity&lt;Object&gt; commentLikeToggle(@RequestBody CommentLiker commentLiker) {
+<span class="nc" id="L200">        return this.feedsService.commentLikeToggle(commentLiker);</span>
+    }
+
+    @PostMapping(path = UriVersion.API_VERSION_PRIVATE + UriEntity.FEEDS + UriMethod.REMOVE_COMMENT)
+    public ResponseEntity&lt;Object&gt; removeComment(@RequestBody FeedComment feedComment) {
+<span class="nc" id="L205">        return this.feedsService.deleteFeedComment(feedComment);</span>
+    }
+
+    @PostMapping(path = UriVersion.API_VERSION_PRIVATE + UriEntity.FEEDS + UriMethod.UPDATE_COMMENT)
+    public ResponseEntity&lt;Object&gt; updateComment(@RequestBody RequestComment requestComment) {
+<span class="nc" id="L210">        return this.feedsService.updateFeedComment(requestComment);</span>
+    }
+
+    @PostMapping(path = UriVersion.API_VERSION_PRIVATE + UriEntity.FEEDS + UriMethod.DELETE_FEED)
+    public ResponseEntity&lt;Object&gt; deleteFeed(@RequestBody Feeds feeds) {
+<span class="nc" id="L215">        return this.feedsService.deleteFeeds(feeds);</span>
+    }
+
+    @PostMapping(path = UriVersion.API_VERSION_PRIVATE + UriEntity.FEEDS + UriMethod.FEEDS_UPDATE, consumes = {&quot;multipart/form-data&quot;})
+    public ResponseEntity&lt;Object&gt; postUpdate(@ModelAttribute Feeds feeds,
+                                             @RequestParam(value = &quot;locationIdx&quot;, required = false) Integer locationIdx,
+                                             @RequestParam(value = &quot;address&quot;, required = false) String address,
+                                             @RequestParam(value = &quot;category&quot;, required = false) String category,
+                                             @RequestParam(value = &quot;feedIdx&quot;, required = false) Integer feedIdx,
+                                             @RequestParam(value = &quot;description&quot;, required = false) String description,
+                                             @RequestParam(value = &quot;link&quot;, required = false) String link,
+                                             @RequestParam(value = &quot;mapx&quot;, required = false) String mapx,
+                                             @RequestParam(value = &quot;mapy&quot;, required = false) String mapy,
+                                             @RequestParam(value = &quot;roadAddress&quot;, required = false) String roadAddress,
+                                             @RequestParam(value = &quot;title&quot;, required = false) String title,
+                                             @RequestParam(value = &quot;actionTagsBookIdx&quot;, required = false) List&lt;Integer&gt; actionTagsBookIdx,
+                                             @RequestParam(value = &quot;actionTagsMovieIdx&quot;, required = false) List&lt;Integer&gt; actionTagsMovieIdx,
+                                             @RequestParam(value = &quot;actionTagsCultureIdx&quot;, required = false) List&lt;Integer&gt; actionTagsCultureIdx,
+                                             @RequestParam(value = &quot;bookId&quot;, required = false) List&lt;String&gt; bookId,
+                                             @RequestParam(value = &quot;actor&quot;, required = false) List&lt;String&gt; actor,
+                                             @RequestParam(value = &quot;director&quot;, required = false) List&lt;String&gt; director,
+                                             @RequestParam(value = &quot;mImage&quot;, required = false) List&lt;String&gt; mImage,
+                                             @RequestParam(value = &quot;movieIdx&quot;, required = false) List&lt;Integer&gt; movieIdx,
+                                             @RequestParam(value = &quot;mLink&quot;, required = false) List&lt;String&gt; mLink,
+                                             @RequestParam(value = &quot;pubDate&quot;, required = false) List&lt;String&gt; pubDate,
+                                             @RequestParam(value = &quot;mSubtitle&quot;, required = false) List&lt;String&gt; mSubtitle,
+                                             @RequestParam(value = &quot;mTitle&quot;, required = false) List&lt;String&gt; mTitle,
+                                             @RequestParam(value = &quot;userRating&quot;, required = false) List&lt;String&gt; userRating,
+                                             @RequestParam(value = &quot;cultureIdx&quot;, required = false) List&lt;Integer&gt; cultureIdx,
+                                             @RequestParam(value = &quot;cateName1&quot;, required = false) List&lt;String&gt; cateName1,
+                                             @RequestParam(value = &quot;cImage&quot;, required = false) List&lt;String&gt; cImage,
+                                             @RequestParam(value = &quot;cLink&quot;, required = false) List&lt;String&gt; cLink,
+                                             @RequestParam(value = &quot;cLocation&quot;, required = false) List&lt;String&gt; cLocation,
+                                             @RequestParam(value = &quot;startDate&quot;, required = false) List&lt;String&gt; startDate,
+                                             @RequestParam(value = &quot;endDate&quot;, required = false) List&lt;String&gt; endDate,
+                                             @RequestParam(value = &quot;cTitle&quot;, required = false) List&lt;String&gt; cTitle,
+                                             @RequestParam(value = &quot;tag&quot;, required = false) List&lt;String&gt; tag,
+                                             @RequestParam(value = &quot;tIdx&quot;, required = false) List&lt;Integer&gt; tIdx,
+                                             @RequestParam(value = &quot;multipartFiles&quot;, required = false) List&lt;MultipartFile&gt; multipartFiles,
+                                             @RequestParam(value = &quot;deleteBookIdx&quot;, required = false) List&lt;String&gt; deleteBookIdx,
+                                             @RequestParam(value = &quot;deleteFileIdx&quot;, required = false) List&lt;Integer&gt; deleteFileIdx,
+                                             @RequestParam(value = &quot;deleteMovieIdx&quot;, required = false) List&lt;Integer&gt; deleteMovieIdx,
+                                             @RequestParam(value = &quot;deleteCultureIdx&quot;, required = false) List&lt;Integer&gt; deleteCultureIdx,
+                                             @RequestParam(value = &quot;deleteTagIdx&quot;, required = false) List&lt;Integer&gt; deleteTagIdx,
+                                             @RequestParam(value = &quot;deleteFollowerIdx&quot;, required = false) List&lt;Integer&gt; deleteFollowerIdx,
+                                             @RequestParam(value = &quot;deleteLocationIdx&quot;, required = false) Integer deleteLocationIdx
+    ) {
+
+<span class="nc" id="L263">        FeedLocations feedLocations = new FeedLocations();</span>
+
+<span class="nc" id="L265">        feedLocations.setIdx(locationIdx);</span>
+<span class="nc" id="L266">        feedLocations.setAddress(address);</span>
+<span class="nc" id="L267">        feedLocations.setCategory(category);</span>
+<span class="nc" id="L268">        feedLocations.setDescription(description);</span>
+<span class="nc" id="L269">        feedLocations.setLink(link);</span>
+<span class="nc" id="L270">        feedLocations.setMapx(mapx);</span>
+<span class="nc" id="L271">        feedLocations.setMapy(mapy);</span>
+<span class="nc" id="L272">        feedLocations.setRoadAddress(roadAddress);</span>
+<span class="nc" id="L273">        feedLocations.setTitle(title);</span>
+
+<span class="nc" id="L275">        this.feedsService.feedContentRemover(feeds, deleteBookIdx, deleteFileIdx, deleteMovieIdx, deleteCultureIdx, deleteTagIdx, deleteFollowerIdx, deleteLocationIdx);</span>
+
+<span class="nc" id="L277">        FeedWriteObj savefeedWriteObj = this.makeSaveFeedDataSetters(feeds, feedLocations, bookId, actor, director, mImage, mLink, pubDate, mSubtitle, mTitle, userRating, cateName1, cImage, cLink, cLocation, startDate, endDate, cTitle, multipartFiles, tag, tIdx, locationIdx, actionTagsBookIdx, actionTagsMovieIdx, actionTagsCultureIdx);</span>
+<span class="nc" id="L278">        return this.feedsService.updateFeeds(savefeedWriteObj);</span>
+    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AES256Util.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">backend</a> &gt; <a href="index.source.html" class="el_package">kr.co.kyobo.vora.common.encrypt</a> &gt; <span class="el_source">AES256Util.java</span></div><h1>AES256Util.java</h1><pre class="source lang-java linenums">package kr.co.kyobo.vora.common.encrypt;
+
+import org.apache.commons.codec.binary.Base64;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import java.io.UnsupportedEncodingException;
+import java.security.*;
+
+public class AES256Util {
+<span class="nc" id="L15">    private String iv = &quot;avansoft-dev-lab&quot;;</span>
+    private Key keySpec;
+
+<span class="nc" id="L18">    public AES256Util() {</span>
+<span class="nc" id="L19">    }</span>
+
+    /**
+     * 16자리의 키값을 입력하여 객체를 생성한다.
+     * @param key 암/복호화를 위한 키값
+     * @throws UnsupportedEncodingException 키값의 길이가 16이하일 경우 발생
+     */
+<span class="nc" id="L26">    public AES256Util(String key) throws UnsupportedEncodingException {</span>
+<span class="nc" id="L27">        this.iv = key.substring(0, 16);</span>
+<span class="nc" id="L28">        byte[] keyBytes = new byte[16];</span>
+<span class="nc" id="L29">        byte[] b = key.getBytes(&quot;UTF-8&quot;);</span>
+<span class="nc" id="L30">        int len = b.length;</span>
+<span class="nc bnc" id="L31" title="All 2 branches missed.">        if (len &gt; keyBytes.length) {</span>
+<span class="nc" id="L32">            len = keyBytes.length;</span>
+        }
+<span class="nc" id="L34">        System.arraycopy(b, 0, keyBytes, 0, len);</span>
+<span class="nc" id="L35">        SecretKeySpec keySpec = new SecretKeySpec(keyBytes, &quot;AES&quot;);</span>
+<span class="nc" id="L36">        this.keySpec = keySpec;</span>
+<span class="nc" id="L37">    }</span>
+
+    /**
+     * AES256 으로 암호화 한다.
+     * @param str 암호화할 문자열
+     * @return
+     * @throws NoSuchAlgorithmException
+     * @throws GeneralSecurityException
+     * @throws UnsupportedEncodingException
+     */
+    public String encrypt(String str) throws NoSuchAlgorithmException, GeneralSecurityException, UnsupportedEncodingException {
+<span class="nc" id="L48">        Cipher c = Cipher.getInstance(&quot;AES/CBC/PKCS5Padding&quot;);</span>
+<span class="nc" id="L49">        c.init(Cipher.ENCRYPT_MODE, keySpec, new IvParameterSpec(iv.getBytes()));</span>
+<span class="nc" id="L50">        byte[] encrypted = c.doFinal(str.getBytes(&quot;UTF-8&quot;));</span>
+<span class="nc" id="L51">        String enStr = new String(Base64.encodeBase64(encrypted));</span>
+<span class="nc" id="L52">        return enStr;</span>
+    }
+
+    /**
+     * AES256으로 암호화된 txt 를 복호화한다.
+     * @param str 복호화할 문자열
+     * @return
+     * @throws NoSuchAlgorithmException
+     * @throws GeneralSecurityException
+     * @throws UnsupportedEncodingException
+     */
+    public String decrypt(String str) throws NoSuchAlgorithmException, GeneralSecurityException, UnsupportedEncodingException {
+<span class="nc" id="L64">        Cipher c = Cipher.getInstance(&quot;AES/CBC/PKCS5Padding&quot;);</span>
+<span class="nc" id="L65">        c.init(Cipher.DECRYPT_MODE, keySpec, new IvParameterSpec(iv.getBytes()));</span>
+<span class="nc" id="L66">        byte[] byteStr = Base64.decodeBase64(str.getBytes());</span>
+<span class="nc" id="L67">        return new String(c.doFinal(byteStr), &quot;UTF-8&quot;);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

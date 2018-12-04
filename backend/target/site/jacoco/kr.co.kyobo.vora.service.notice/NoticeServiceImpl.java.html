@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NoticeServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">backend</a> &gt; <a href="index.source.html" class="el_package">kr.co.kyobo.vora.service.notice</a> &gt; <span class="el_source">NoticeServiceImpl.java</span></div><h1>NoticeServiceImpl.java</h1><pre class="source lang-java linenums">package kr.co.kyobo.vora.service.notice;
+
+import kr.co.kyobo.vora.messages.ErrorMessages;
+import kr.co.kyobo.vora.model.api.ResponseEntityUtil;
+import kr.co.kyobo.vora.model.database.Notice;
+import kr.co.kyobo.vora.model.vo.NoticeListObj;
+import kr.co.kyobo.vora.model.vo.NoticeRequest;
+import kr.co.kyobo.vora.repository.NoticeRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+<span class="nc" id="L21">@Slf4j</span>
+@Service
+@Transactional
+<span class="nc" id="L24">public class NoticeServiceImpl implements NoticeService {</span>
+
+    @Autowired
+    NoticeRepository noticeRepository;
+
+    @Override
+    public ResponseEntity&lt;Object&gt; getNoticeListAll(NoticeRequest noticeRequest, HttpServletResponse response) {
+<span class="nc" id="L31">        noticeRequest.setTotal(noticeRepository.countAll());</span>
+<span class="nc" id="L32">        noticeRequest = setPage(noticeRequest);</span>
+
+<span class="nc" id="L34">        List&lt;NoticeListObj&gt; noticeList = noticeRepository.findAll(noticeRequest);</span>
+<span class="nc" id="L35">        noticeRequest.setNoticeList(noticeList);</span>
+<span class="nc" id="L36">        return ResponseEntityUtil.makeResultSuccess(noticeRequest);</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;Object&gt; getNoticeListByUseYn(NoticeRequest noticeRequest, HttpServletResponse response) {
+<span class="nc" id="L41">        noticeRequest.setTotal(noticeRepository.countByUserYN(noticeRequest));</span>
+<span class="nc" id="L42">        noticeRequest = setPage(noticeRequest);</span>
+
+<span class="nc" id="L44">        List&lt;NoticeListObj&gt; noticeList = noticeRepository.findByUseYn(noticeRequest);</span>
+<span class="nc" id="L45">        noticeRequest.setNoticeList(noticeList);</span>
+<span class="nc" id="L46">        return ResponseEntityUtil.makeResultSuccess(noticeRequest);</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;Object&gt; insertNotice(Notice notice, HttpServletResponse response) {
+<span class="nc" id="L51">        int rst = noticeRepository.insert(notice);</span>
+<span class="nc bnc" id="L52" title="All 2 branches missed.">        if(rst&gt;0){</span>
+<span class="nc" id="L53">            Map&lt;String,Object&gt; result = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L54">            result.put(&quot;data&quot;,notice);</span>
+<span class="nc" id="L55">            return ResponseEntityUtil.makeResultSuccess(result);</span>
+        }else{
+<span class="nc" id="L57">            return ResponseEntityUtil.makeResultError(ErrorMessages.SYSTEM_DB_INSERT_FAIL.getCode());</span>
+        }
+    }
+
+    @Override
+    public ResponseEntity&lt;Object&gt; updateNotice(Notice notice, HttpServletResponse response) {
+<span class="nc" id="L63">        int rst = noticeRepository.update(notice);</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">        if(rst&gt;0){</span>
+<span class="nc" id="L65">            Map&lt;String,Object&gt; result = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L66">            result.put(&quot;data&quot;,notice);</span>
+<span class="nc" id="L67">            return ResponseEntityUtil.makeResultSuccess(result);</span>
+        }else{
+<span class="nc" id="L69">            return ResponseEntityUtil.makeResultError(ErrorMessages.SYSTEM_DB_UPDATE_FAIL.getCode());</span>
+        }
+    }
+
+    @Override
+    public ResponseEntity&lt;Object&gt; deleteNotice(Notice notice, HttpServletResponse response) {
+<span class="nc" id="L75">        int result = noticeRepository.deleteByIdx(notice);</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">        if(result&gt;0){</span>
+<span class="nc" id="L77">            return ResponseEntityUtil.makeResultSuccess(result);</span>
+        }else{
+<span class="nc" id="L79">            return ResponseEntityUtil.makeResultError(ErrorMessages.SYSTEM_DB_DELETE_FAIL.getCode());</span>
+        }
+    }
+
+    private NoticeRequest setPage(NoticeRequest noticeRequest) {
+<span class="nc bnc" id="L84" title="All 2 branches missed.">        if(noticeRequest.getPage() &gt; 1){</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">            if(noticeRequest.getTotal() &lt; noticeRequest.getPage() * noticeRequest.getLimit()){</span>
+<span class="nc" id="L86">                noticeRequest.setPage(</span>
+<span class="nc" id="L87">                        noticeRequest.getTotal()/noticeRequest.getLimit()</span>
+<span class="nc bnc" id="L88" title="All 2 branches missed.">                        + (noticeRequest.getTotal()%noticeRequest.getLimit()&gt;0?1:0)</span>
+                );
+            }
+<span class="nc" id="L91">            noticeRequest.setOffset((noticeRequest.getPage() - 1) * noticeRequest.getLimit());</span>
+        }else{
+<span class="nc" id="L93">            noticeRequest.setOffset((noticeRequest.getPage() - 1));</span>
+        }
+<span class="nc" id="L95">        return noticeRequest;</span>
+    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NaverService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">backend</a> &gt; <a href="index.source.html" class="el_package">kr.co.kyobo.vora.service.naver</a> &gt; <span class="el_source">NaverService.java</span></div><h1>NaverService.java</h1><pre class="source lang-java linenums">package kr.co.kyobo.vora.service.naver;
+
+import kr.co.kyobo.vora.model.api.NaverLocationSearchReq;
+import kr.co.kyobo.vora.model.api.NaverSearchReq;
+import kr.co.kyobo.vora.model.api.ResponseEntityUtil;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.HashMap;
+
+<span class="nc" id="L19">@Slf4j</span>
+@Service
+<span class="nc" id="L21">public class NaverService {</span>
+
+    private static final String NAVER_CLIENT_ID =&quot;QGNSU_ILnK1nQkBc7JbJ&quot;;
+    private static final String NAVER_SECRET =&quot;Cz68Vb5EEK&quot;;
+
+
+    public ResponseEntity&lt;Object&gt; searchMovie(NaverSearchReq req){
+<span class="nc" id="L28">        HashMap&lt;String, Object&gt; returnObj = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L29">        returnObj.put(&quot;page&quot;, req.getStart());</span>
+<span class="nc" id="L30">        returnObj.put(&quot;pagePerCount&quot;, req.getDisplay());</span>
+<span class="nc" id="L31">        StringBuffer response = new StringBuffer();</span>
+        try {
+<span class="nc" id="L33">            String apiURL = this.getMovieUrl(req); // json 결과</span>
+<span class="nc" id="L34">            URL url = new URL(apiURL);</span>
+<span class="nc" id="L35">            HttpURLConnection con = (HttpURLConnection) url.openConnection();</span>
+<span class="nc" id="L36">            con.setRequestMethod(&quot;GET&quot;);</span>
+<span class="nc" id="L37">            con.setRequestProperty(&quot;X-Naver-Client-Id&quot;, NAVER_CLIENT_ID);</span>
+<span class="nc" id="L38">            con.setRequestProperty(&quot;X-Naver-Client-Secret&quot;, NAVER_SECRET);</span>
+<span class="nc" id="L39">            int responseCode = con.getResponseCode();</span>
+            BufferedReader br;
+<span class="nc bnc" id="L41" title="All 2 branches missed.">            if (responseCode == 200) { // 정상 호출</span>
+<span class="nc" id="L42">                br = new BufferedReader(new InputStreamReader(con.getInputStream()));</span>
+            } else {  // 에러 발생
+<span class="nc" id="L44">                br = new BufferedReader(new InputStreamReader(con.getErrorStream()));</span>
+            }
+            String inputLine;
+
+<span class="nc bnc" id="L48" title="All 2 branches missed.">            while ((inputLine = br.readLine()) != null) {</span>
+<span class="nc" id="L49">                response.append(inputLine);</span>
+            }
+<span class="nc" id="L51">            br.close();</span>
+<span class="nc" id="L52">            log.info(&quot;response json String : \n&quot; + response.toString());</span>
+
+<span class="nc" id="L54">            returnObj.put(&quot;naverRes&quot;, response.toString());</span>
+
+<span class="nc" id="L56">        }catch (IOException e){</span>
+<span class="nc" id="L57">            e.printStackTrace();</span>
+<span class="nc" id="L58">        }</span>
+
+<span class="nc" id="L60">        return ResponseEntityUtil.makeResultSuccess(returnObj);</span>
+    }
+
+    private String getMovieUrl(NaverSearchReq req) throws UnsupportedEncodingException {
+<span class="nc" id="L64">        String url = &quot;https://openapi.naver.com/v1/search/movie.json?&quot; + &quot;query=&quot; +  URLEncoder.encode(req.getQuery(), &quot;UTF-8&quot;);</span>
+
+<span class="nc bnc" id="L66" title="All 2 branches missed.">        if( req.getGenre() != null ){</span>
+<span class="nc" id="L67">            url += &quot;&amp;genre=&quot; + req.getGenre();</span>
+        }
+<span class="nc bnc" id="L69" title="All 2 branches missed.">        if( req.getDisplay() != null ){</span>
+<span class="nc" id="L70">            url += &quot;&amp;display=&quot; + req.getDisplay();</span>
+        }
+<span class="nc bnc" id="L72" title="All 2 branches missed.">        if( req.getStart() != null ){</span>
+<span class="nc bnc" id="L73" title="All 2 branches missed.">            if(req.getStart() != 1){</span>
+<span class="nc" id="L74">                int count = (req.getStart() -1)* req.getDisplay() + 1;</span>
+<span class="nc" id="L75">                log.info(&quot;movie count ====&quot;+ count);</span>
+<span class="nc" id="L76">                url += &quot;&amp;start=&quot; + count;</span>
+<span class="nc" id="L77">            }else{</span>
+<span class="nc" id="L78">                url += &quot;&amp;start=&quot; + req.getStart();</span>
+            }
+        }
+<span class="nc bnc" id="L81" title="All 2 branches missed.">        if( req.getYearfrom() != null ){</span>
+<span class="nc" id="L82">            url += &quot;&amp;yearfrom=&quot; + req.getYearfrom();</span>
+        }
+<span class="nc bnc" id="L84" title="All 2 branches missed.">        if( req.getYearto() != null ){</span>
+<span class="nc" id="L85">            url += &quot;&amp;yearto=&quot; + req.getYearto();</span>
+        }
+<span class="nc bnc" id="L87" title="All 2 branches missed.">        if( req.getCountry() != null ){</span>
+<span class="nc" id="L88">            url += &quot;&amp;country=&quot; + req.getCountry();</span>
+        }
+
+<span class="nc" id="L91">        return url;</span>
+    }
+
+    public ResponseEntity&lt;Object&gt; searchLocation(NaverLocationSearchReq req) {
+
+<span class="nc" id="L96">        HashMap&lt;String, Object&gt; returnObj = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L97">        returnObj.put(&quot;page&quot;, req.getStart());</span>
+<span class="nc" id="L98">        returnObj.put(&quot;pagePerCount&quot;, req.getDisplay());</span>
+
+<span class="nc" id="L100">        StringBuffer response = new StringBuffer();</span>
+        try {
+<span class="nc" id="L102">            String apiURL = getLocationUrl(req); // json 결과</span>
+<span class="nc" id="L103">            URL url = new URL(apiURL);</span>
+<span class="nc" id="L104">            HttpURLConnection con = (HttpURLConnection) url.openConnection();</span>
+<span class="nc" id="L105">            con.setRequestMethod(&quot;GET&quot;);</span>
+<span class="nc" id="L106">            con.setRequestProperty(&quot;X-Naver-Client-Id&quot;, NAVER_CLIENT_ID);</span>
+<span class="nc" id="L107">            con.setRequestProperty(&quot;X-Naver-Client-Secret&quot;, NAVER_SECRET);</span>
+<span class="nc" id="L108">            int responseCode = con.getResponseCode();</span>
+            BufferedReader br;
+<span class="nc bnc" id="L110" title="All 2 branches missed.">            if (responseCode == 200) { // 정상 호출</span>
+<span class="nc" id="L111">                br = new BufferedReader(new InputStreamReader(con.getInputStream()));</span>
+            } else {  // 에러 발생
+<span class="nc" id="L113">                br = new BufferedReader(new InputStreamReader(con.getErrorStream()));</span>
+            }
+            String inputLine;
+
+<span class="nc bnc" id="L117" title="All 2 branches missed.">            while ((inputLine = br.readLine()) != null) {</span>
+<span class="nc" id="L118">                response.append(inputLine);</span>
+            }
+<span class="nc" id="L120">            br.close();</span>
+<span class="nc" id="L121">            log.info(&quot;response json String : \n&quot; + response.toString());</span>
+
+<span class="nc" id="L123">        }catch (IOException e){</span>
+<span class="nc" id="L124">            e.printStackTrace();</span>
+<span class="nc" id="L125">        }</span>
+
+<span class="nc" id="L127">        returnObj.put(&quot;naverRes&quot;, response.toString());</span>
+
+<span class="nc" id="L129">        return ResponseEntityUtil.makeResultSuccess(returnObj);</span>
+    }
+
+
+    private String getLocationUrl(NaverLocationSearchReq req) throws UnsupportedEncodingException {
+<span class="nc" id="L134">        String url = &quot;https://openapi.naver.com/v1/search/local.json&quot; + &quot;?query=&quot; +  URLEncoder.encode(req.getQuery(), &quot;UTF-8&quot;);</span>
+
+<span class="nc bnc" id="L136" title="All 2 branches missed.">        if( req.getSort() != null ){</span>
+<span class="nc" id="L137">            url += &quot;&amp;sort=&quot; + req.getSort();</span>
+        }
+<span class="nc bnc" id="L139" title="All 2 branches missed.">        if( req.getDisplay() != null ){</span>
+<span class="nc" id="L140">            url += &quot;&amp;display=&quot; + req.getDisplay();</span>
+        }
+<span class="nc bnc" id="L142" title="All 2 branches missed.">        if( req.getStart() != null ){</span>
+<span class="nc bnc" id="L143" title="All 2 branches missed.">            if(req.getStart() != 1){</span>
+<span class="nc" id="L144">                url += &quot;&amp;start=&quot; + (req.getStart() -1)* req.getDisplay() + 1;</span>
+            }else{
+<span class="nc" id="L146">                url += &quot;&amp;start=&quot; + req.getStart();</span>
+            }
+
+        }
+
+<span class="nc" id="L151">        return url;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

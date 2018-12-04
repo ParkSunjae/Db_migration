@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LoggingAspect.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">deactive_member</a> &gt; <a href="index.source.html" class="el_package">kr.co.kyobo.vora.aop</a> &gt; <span class="el_source">LoggingAspect.java</span></div><h1>LoggingAspect.java</h1><pre class="source lang-java linenums">package kr.co.kyobo.vora.aop;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import kr.co.kyobo.vora.common.ParamConstants;
+import lombok.extern.slf4j.Slf4j;
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.AfterReturning;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.springframework.stereotype.Service;
+
+<span class="nc" id="L14">@Slf4j</span>
+@Aspect
+@Service
+<span class="nc" id="L17">public class LoggingAspect {</span>
+
+	/**
+	 * method 실행 시간 확인, @Around : 핵심업무 전후에 자동호출, ProceedingJoinPoint
+	 *
+	 * @param pjp
+	 * @return
+	 * @throws Throwable
+	 */
+	@Around(&quot;execution(* kr.co.kyobo.vora.service..*.*(..))&quot;)
+	public Object timeLog(ProceedingJoinPoint pjp) throws Throwable {
+		// 핵심업무 실행 전
+<span class="nc" id="L29">		long start = System.currentTimeMillis();</span>
+		// 핵심업무 실행
+<span class="nc" id="L31">		Object result = pjp.proceed();</span>
+		// 핵심업무 실행 후
+<span class="nc" id="L33">		long end = System.currentTimeMillis();</span>
+		// 핵심업무 실행시간 연산
+<span class="nc" id="L35">		log.info(ParamConstants.EXECUTE_START + (end - start) + ParamConstants.EXECUTE_END);</span>
+<span class="nc" id="L36">		log.info(ParamConstants.AROUND_LINE);</span>
+<span class="nc" id="L37">		return result;</span>
+	}
+
+	/**
+	 * 서비스의 메소드가 실행된 후 결과를 뿌려준다
+	 *
+	 * @param joinPoint
+	 * @param result
+	 * @throws JsonProcessingException
+	 */
+	@AfterReturning(
+			pointcut = &quot;execution(* kr.co.kyobo.vora.service..*.*(..))&quot;, returning = ParamConstants.RESULT)
+	public void logAfterReturning(JoinPoint joinPoint, Object result) throws JsonProcessingException {
+<span class="nc" id="L50">		ObjectMapper mapper = new ObjectMapper();</span>
+<span class="nc" id="L51">		log.info(ParamConstants.METHOD_RESULT);</span>
+<span class="nc" id="L52">		log.info(ParamConstants.AFTER_RETURNING);</span>
+<span class="nc" id="L53">		log.info(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result));</span>
+<span class="nc" id="L54">		log.info(ParamConstants.LINE);</span>
+<span class="nc" id="L55">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

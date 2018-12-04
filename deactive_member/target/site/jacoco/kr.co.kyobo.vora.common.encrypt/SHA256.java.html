@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SHA256.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">deactive_member</a> &gt; <a href="index.source.html" class="el_package">kr.co.kyobo.vora.common.encrypt</a> &gt; <span class="el_source">SHA256.java</span></div><h1>SHA256.java</h1><pre class="source lang-java linenums">package kr.co.kyobo.vora.common.encrypt;
+
+import java.util.Base64;
+
+public class SHA256 {
+<span class="nc" id="L6">    private static Boolean _LITTLE = false;</span>
+<span class="nc" id="L7">    private static Boolean _BIG = true;</span>
+    private static Boolean _ENDIAN;
+    private static int _SHA256_DIGEST_BLOCKLEN;
+    private static int _SHA256_DIGEST_VALUELEN;
+    private static int[] _K;
+<span class="nc" id="L12">    private int[] _ChainVar = new int[]{1779033703, -1150833019, 1013904242, -1521486534, 1359893119, -1694144372, 528734635, 1541459225};</span>
+<span class="nc" id="L13">    private int[] _Count = new int[4];</span>
+    private byte[] _Buffer;
+    private byte[] _bpDigest;
+
+    static {
+<span class="nc" id="L18">        _ENDIAN = _BIG;</span>
+<span class="nc" id="L19">        _SHA256_DIGEST_BLOCKLEN = 64;</span>
+<span class="nc" id="L20">        _SHA256_DIGEST_VALUELEN = 32;</span>
+<span class="nc" id="L21">        _K = new int[]{1116352408, 1899447441, -1245643825, -373957723, 961987163, 1508970993, -1841331548, -1424204075, -670586216, 310598401, 607225278, 1426881987, 1925078388, -2132889090, -1680079193, -1046744716, -459576895, -272742522, 264347078, 604807628, 770255983, 1249150122, 1555081692, 1996064986, -1740746414, -1473132947, -1341970488, -1084653625, -958395405, -710438585, 113926993, 338241895, 666307205, 773529912, 1294757372, 1396182291, 1695183700, 1986661051, -2117940946, -1838011259, -1564481375, -1474664885, -1035236496, -949202525, -778901479, -694614492, -200395387, 275423344, 430227734, 506948616, 659060556, 883997877, 958139571, 1322822218, 1537002063, 1747873779, 1955562222, 2024104815, -2067236844, -1933114872, -1866530822, -1538233109, -1090935817, -965641998};</span>
+<span class="nc" id="L22">    }</span>
+
+<span class="nc" id="L24">    private SHA256() {</span>
+<span class="nc" id="L25">        this._Buffer = new byte[_SHA256_DIGEST_BLOCKLEN];</span>
+<span class="nc" id="L26">    }</span>
+
+<span class="nc" id="L28">    public SHA256(byte[] bpMessage) {</span>
+<span class="nc" id="L29">        this._Buffer = new byte[_SHA256_DIGEST_BLOCKLEN];</span>
+<span class="nc" id="L30">        this.SHA256_Update(bpMessage);</span>
+<span class="nc" id="L31">        this.SHA256_Final();</span>
+<span class="nc" id="L32">    }</span>
+
+    public byte[] GetHashCode() {
+<span class="nc" id="L35">        return this._bpDigest;</span>
+    }
+
+    private void SHA256_Update(byte[] bpMessage) {
+<span class="nc" id="L39">        int nMessageLen = bpMessage.length;</span>
+<span class="nc" id="L40">        int nMessageIndex = 0;</span>
+<span class="nc bnc" id="L41" title="All 2 branches missed.">        if ((this._Count[0] += nMessageLen &lt;&lt; 3) &lt; 0) {</span>
+<span class="nc" id="L42">            ++this._Count[1];</span>
+        }
+
+        int i;
+<span class="nc bnc" id="L46" title="All 2 branches missed.">        for(this._Count[1] += nMessageLen &gt;&gt; 29; nMessageLen &gt;= _SHA256_DIGEST_BLOCKLEN; nMessageLen -= _SHA256_DIGEST_BLOCKLEN) {</span>
+<span class="nc bnc" id="L47" title="All 2 branches missed.">            for(i = 0; i &lt; _SHA256_DIGEST_BLOCKLEN; ++i) {</span>
+<span class="nc" id="L48">                this._Buffer[i] = bpMessage[nMessageIndex + i];</span>
+            }
+
+<span class="nc" id="L51">            this.SHA256_Transform();</span>
+<span class="nc" id="L52">            nMessageIndex += _SHA256_DIGEST_BLOCKLEN;</span>
+        }
+
+<span class="nc bnc" id="L55" title="All 2 branches missed.">        for(i = 0; i &lt; nMessageLen; ++i) {</span>
+<span class="nc" id="L56">            this._Buffer[i] = bpMessage[nMessageIndex + i];</span>
+        }
+
+<span class="nc" id="L59">    }</span>
+
+    private void SHA256_Final() {
+<span class="nc" id="L62">        int nCountL = this._Count[0];</span>
+<span class="nc" id="L63">        int nCountH = this._Count[1];</span>
+<span class="nc" id="L64">        int nIndex = (nCountL &gt;&gt; 3) % _SHA256_DIGEST_BLOCKLEN;</span>
+<span class="nc" id="L65">        this._Buffer[nIndex++] = -128;</span>
+        int i;
+<span class="nc bnc" id="L67" title="All 2 branches missed.">        if (nIndex &gt; _SHA256_DIGEST_BLOCKLEN - 8) {</span>
+<span class="nc bnc" id="L68" title="All 2 branches missed.">            for(i = nIndex; i &lt; _SHA256_DIGEST_BLOCKLEN; ++i) {</span>
+<span class="nc" id="L69">                this._Buffer[i] = 0;</span>
+            }
+
+<span class="nc" id="L72">            this.SHA256_Transform();</span>
+
+<span class="nc bnc" id="L74" title="All 2 branches missed.">            for(i = 0; i &lt; _SHA256_DIGEST_BLOCKLEN - 8; ++i) {</span>
+<span class="nc" id="L75">                this._Buffer[i] = 0;</span>
+            }
+        } else {
+<span class="nc bnc" id="L78" title="All 2 branches missed.">            for(i = nIndex; i &lt; _SHA256_DIGEST_BLOCKLEN - 8; ++i) {</span>
+<span class="nc" id="L79">                this._Buffer[i] = 0;</span>
+            }
+        }
+
+<span class="nc bnc" id="L83" title="All 2 branches missed.">        if (_ENDIAN == _LITTLE) {</span>
+<span class="nc" id="L84">            nCountL = this.ENDIAN_REVERSE_ULONG(nCountL);</span>
+<span class="nc" id="L85">            nCountH = this.ENDIAN_REVERSE_ULONG(nCountH);</span>
+        }
+
+<span class="nc bnc" id="L88" title="All 2 branches missed.">        for(i = 0; i &lt; 4; ++i) {</span>
+<span class="nc" id="L89">            this._Buffer[_SHA256_DIGEST_BLOCKLEN - 1 - i] = (byte)((nCountL &amp; 255 &lt;&lt; 8 * i) &gt;&gt;&gt; 8 * i);</span>
+<span class="nc" id="L90">            this._Buffer[_SHA256_DIGEST_BLOCKLEN - 5 - i] = (byte)((nCountH &amp; 255 &lt;&lt; 8 * i) &gt;&gt;&gt; 8 * i);</span>
+        }
+
+<span class="nc" id="L93">        this.SHA256_Transform();</span>
+<span class="nc" id="L94">        this._bpDigest = new byte[_SHA256_DIGEST_VALUELEN];</span>
+
+<span class="nc bnc" id="L96" title="All 2 branches missed.">        for(i = 0; i &lt; _SHA256_DIGEST_VALUELEN; ++i) {</span>
+<span class="nc" id="L97">            this._bpDigest[i] = (byte)((this._ChainVar[i / 4] &amp; -16777216 &gt;&gt;&gt; 8 * (i % 4)) &gt;&gt;&gt; 32 - 8 * ((i + 1) % 4));</span>
+        }
+
+<span class="nc" id="L100">    }</span>
+
+    private void SHA256_Transform() {
+<span class="nc" id="L103">        int[] X = new int[64];</span>
+
+        int T1;
+        int j;
+<span class="nc bnc" id="L107" title="All 2 branches missed.">        for(j = 0; j &lt; 16; ++j) {</span>
+<span class="nc" id="L108">            T1 = 0;</span>
+
+<span class="nc bnc" id="L110" title="All 2 branches missed.">            for(int i = 0; i &lt; 4; ++i) {</span>
+<span class="nc" id="L111">                T1 |= (255 &amp; this._Buffer[i + 4 * j]) &lt;&lt; 24 - 8 * i;</span>
+            }
+
+<span class="nc" id="L114">            X[j] = this.GetData(T1);</span>
+        }
+
+<span class="nc bnc" id="L117" title="All 2 branches missed.">        for(j = 16; j &lt; 64; ++j) {</span>
+<span class="nc" id="L118">            X[j] = this.RHO1(X[j - 2]) + X[j - 7] + this.RHO0(X[j - 15]) + X[j - 16];</span>
+        }
+
+<span class="nc" id="L121">        int a = this._ChainVar[0];</span>
+<span class="nc" id="L122">        int b = this._ChainVar[1];</span>
+<span class="nc" id="L123">        int c = this._ChainVar[2];</span>
+<span class="nc" id="L124">        int d = this._ChainVar[3];</span>
+<span class="nc" id="L125">        int e = this._ChainVar[4];</span>
+<span class="nc" id="L126">        int f = this._ChainVar[5];</span>
+<span class="nc" id="L127">        int g = this._ChainVar[6];</span>
+<span class="nc" id="L128">        int h = this._ChainVar[7];</span>
+
+<span class="nc bnc" id="L130" title="All 2 branches missed.">        for(j = 0; j &lt; 64; j += 8) {</span>
+<span class="nc" id="L131">            T1 = this.FF0(e, f, g, h, j + 0, X);</span>
+<span class="nc" id="L132">            d += T1;</span>
+<span class="nc" id="L133">            h = this.FF1(T1, a, b, c);</span>
+<span class="nc" id="L134">            T1 = this.FF0(d, e, f, g, j + 1, X);</span>
+<span class="nc" id="L135">            c += T1;</span>
+<span class="nc" id="L136">            g = this.FF1(T1, h, a, b);</span>
+<span class="nc" id="L137">            T1 = this.FF0(c, d, e, f, j + 2, X);</span>
+<span class="nc" id="L138">            b += T1;</span>
+<span class="nc" id="L139">            f = this.FF1(T1, g, h, a);</span>
+<span class="nc" id="L140">            T1 = this.FF0(b, c, d, e, j + 3, X);</span>
+<span class="nc" id="L141">            a += T1;</span>
+<span class="nc" id="L142">            e = this.FF1(T1, f, g, h);</span>
+<span class="nc" id="L143">            T1 = this.FF0(a, b, c, d, j + 4, X);</span>
+<span class="nc" id="L144">            h += T1;</span>
+<span class="nc" id="L145">            d = this.FF1(T1, e, f, g);</span>
+<span class="nc" id="L146">            T1 = this.FF0(h, a, b, c, j + 5, X);</span>
+<span class="nc" id="L147">            g += T1;</span>
+<span class="nc" id="L148">            c = this.FF1(T1, d, e, f);</span>
+<span class="nc" id="L149">            T1 = this.FF0(g, h, a, b, j + 6, X);</span>
+<span class="nc" id="L150">            f += T1;</span>
+<span class="nc" id="L151">            b = this.FF1(T1, c, d, e);</span>
+<span class="nc" id="L152">            T1 = this.FF0(f, g, h, a, j + 7, X);</span>
+<span class="nc" id="L153">            e += T1;</span>
+<span class="nc" id="L154">            a = this.FF1(T1, b, c, d);</span>
+        }
+
+<span class="nc" id="L157">        this._ChainVar[0] += a;</span>
+<span class="nc" id="L158">        this._ChainVar[1] += b;</span>
+<span class="nc" id="L159">        this._ChainVar[2] += c;</span>
+<span class="nc" id="L160">        this._ChainVar[3] += d;</span>
+<span class="nc" id="L161">        this._ChainVar[4] += e;</span>
+<span class="nc" id="L162">        this._ChainVar[5] += f;</span>
+<span class="nc" id="L163">        this._ChainVar[6] += g;</span>
+<span class="nc" id="L164">        this._ChainVar[7] += h;</span>
+<span class="nc" id="L165">    }</span>
+
+    private int FF0(int e, int f, int g, int h, int j, int[] X) {
+<span class="nc" id="L168">        return h + this.Sigma1(e) + this.Ch(e, f, g) + _K[j] + X[j];</span>
+    }
+
+    private int FF1(int T1, int a, int b, int c) {
+<span class="nc" id="L172">        return T1 + this.Sigma0(a) + this.Maj(a, b, c);</span>
+    }
+
+    private int Ch(int x, int y, int z) {
+<span class="nc" id="L176">        return x &amp; y ^ ~x &amp; z;</span>
+    }
+
+    private int Maj(int x, int y, int z) {
+<span class="nc" id="L180">        return x &amp; y ^ x &amp; z ^ y &amp; z;</span>
+    }
+
+    private int Sigma0(int x) {
+<span class="nc" id="L184">        return this.RR(x, 2) ^ this.RR(x, 13) ^ this.RR(x, 22);</span>
+    }
+
+    private int Sigma1(int x) {
+<span class="nc" id="L188">        return this.RR(x, 6) ^ this.RR(x, 11) ^ this.RR(x, 25);</span>
+    }
+
+    private int GetData(int nX) {
+<span class="nc bnc" id="L192" title="All 2 branches missed.">        return _ENDIAN == _BIG ? nX : this.ENDIAN_REVERSE_ULONG(nX);</span>
+    }
+
+    private int ENDIAN_REVERSE_ULONG(int nX) {
+<span class="nc" id="L196">        return this.ROTL_ULONG(nX, 8) &amp; 16711935 | this.ROTL_ULONG(nX, 24) &amp; -16711936;</span>
+    }
+
+    private int ROTL_ULONG(int x, int n) {
+<span class="nc" id="L200">        return x &lt;&lt; n | x &gt;&gt;&gt; 32 - n;</span>
+    }
+
+    private int ROTR_ULONG(int x, int n) {
+<span class="nc" id="L204">        return x &gt;&gt;&gt; n | x &lt;&lt; 32 - n;</span>
+    }
+
+    private int RR(int x, int n) {
+<span class="nc" id="L208">        return this.ROTR_ULONG(x, n);</span>
+    }
+
+    private int SS(int x, int n) {
+<span class="nc" id="L212">        return x &gt;&gt;&gt; n;</span>
+    }
+
+    private int RHO0(int x) {
+<span class="nc" id="L216">        return this.RR(x, 7) ^ this.RR(x, 18) ^ this.SS(x, 3);</span>
+    }
+
+    private int RHO1(int x) {
+<span class="nc" id="L220">        return this.RR(x, 17) ^ this.RR(x, 19) ^ this.SS(x, 10);</span>
+    }
+
+    public static String getHash(String str) {
+<span class="nc" id="L224">        SHA256 sha = new SHA256(str.getBytes());</span>
+<span class="nc" id="L225">        return Base64.getEncoder().encodeToString(sha.GetHashCode());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

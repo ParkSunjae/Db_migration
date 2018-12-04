@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NaverSearchReq.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">backend</a> &gt; <a href="index.source.html" class="el_package">kr.co.kyobo.vora.model.api</a> &gt; <span class="el_source">NaverSearchReq.java</span></div><h1>NaverSearchReq.java</h1><pre class="source lang-java linenums">package kr.co.kyobo.vora.model.api;
+
+import lombok.Data;
+
+<span class="nc bnc" id="L5" title="All 64 branches missed.">@Data</span>
+public class NaverSearchReq {
+<span class="nc" id="L7">    private String query;   //	string (필수)	Y	-	검색을 원하는 질의. UTF-8 인코딩이다.</span>
+<span class="nc" id="L8">    private Integer display;    //	Integereger	N	기본값 10, 최대 100	검색 결과 출력 건수를 지정한다. 최대 100까지 가능하다.</span>
+<span class="nc" id="L9">    private Integer start;      //	Integereger	N	기본값 1, 최대 1000	검색의 시작 위치를 지정할 수 있다. 최대 1000까지 가능하다.</span>
+<span class="nc" id="L10">    private String genre;   /*	string	N	-	검색을 원하는 장르 코드를 의미한다. 영화 코드는 다음과 같다.</span>
+                                1: 드라마 2: 판타지
+                                3: 서부 4: 공포
+                                5: 로맨스 6: 모험
+                                7: 스릴러 8: 느와르
+                                9: 컬트 10: 다큐멘터리
+                                11: 코미디 12: 가족
+                                13: 미스터리 14: 전쟁
+                                15: 애니메이션 16: 범죄
+                                17: 뮤지컬 18: SF
+                                19: 액션20: 무협
+                                21: 에로 22: 서스펜스
+                                23: 서사 24: 블랙코미디
+                                25: 실험 26: 영화카툰
+                                27: 영화음악 28: 영화패러디포스터
+                            */
+<span class="nc" id="L26">    private String country; /*	string	N	-	검색을 원하는 국가 코드를 의미한다. 국가코드는 대문자만 사용 가능하며,</span>
+                                분류는 다음과 같다.
+                                한국 (KR), 일본 (JP), 미국 (US), 홍콩 (HK),
+                                영국 (GB), 프랑스 (FR), 기타 (ETC)
+                            */
+<span class="nc" id="L31">    private Integer yearfrom;   /*	Integereger(ex : 2000)	N	-	검색을 원하는 영화의 제작년도(최소)를 의미한다.</span>
+                                yearfrom은 yearto와 함께 사용되어야 한다.
+                            */
+<span class="nc" id="L34">    private Integer yearto;     /*	Integereger(ex : 2008)	N	-	검색을 원하는 영화의 제작년도(최대)를 의미한다.</span>
+                                yearto는 yearfrom과 함께 사용되어야 한다.
+                            */
+    private int getPage;
+
+    public int getGetPage() {
+<span class="nc" id="L40">        return getPage;</span>
+    }
+
+    public void setGetPage(int getPage) {
+<span class="nc" id="L44">        this.getPage = (getPage - 1) * display ;</span>
+<span class="nc" id="L45">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

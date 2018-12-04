@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MemberController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">backend</a> &gt; <a href="index.source.html" class="el_package">kr.co.kyobo.vora.controller</a> &gt; <span class="el_source">MemberController.java</span></div><h1>MemberController.java</h1><pre class="source lang-java linenums">package kr.co.kyobo.vora.controller;
+
+import kr.co.kyobo.vora.common.api.UriEntity;
+import kr.co.kyobo.vora.common.api.UriMethod;
+import kr.co.kyobo.vora.common.api.UriVersion;
+import kr.co.kyobo.vora.model.database.Account;
+import kr.co.kyobo.vora.model.database.Member;
+import kr.co.kyobo.vora.model.database.MemberFollowMember;
+import kr.co.kyobo.vora.model.jwt.LoginToken;
+import kr.co.kyobo.vora.model.vo.MemberModifyObj;
+import kr.co.kyobo.vora.model.vo.SignUpRequest;
+import kr.co.kyobo.vora.service.member.MemberService;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.EncoderException;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.GeneralSecurityException;
+import java.util.List;
+import java.util.Locale;
+
+<span class="nc" id="L29">@Slf4j</span>
+@RestController
+<span class="nc" id="L31">public class MemberController {</span>
+
+    @Autowired
+    private MemberService memberService;
+
+    /**
+     * Member email login
+     * @param account
+     * @param 
+     * @return
+     */
+    @PostMapping(UriVersion.API_VERSION_PUBLIC + UriEntity.MEMBER + UriMethod.SIGN_IN)
+    public ResponseEntity&lt;Object&gt; signIn(@RequestBody Account account, HttpServletRequest request) throws IOException {
+<span class="nc" id="L44">        return this.memberService.signIn(account, request);</span>
+    }
+
+    /**
+     * Member With Token 최초 앱 초기화시 실행
+     *
+     * @param loginToken
+     * @param 
+     * @return
+     */
+    @PostMapping(UriVersion.API_VERSION_PUBLIC + UriEntity.MEMBER + UriMethod.SIGN_IN_T)
+    public ResponseEntity&lt;Object&gt; signInWithToken(@RequestBody LoginToken loginToken,  HttpServletRequest request) throws IOException {
+<span class="nc" id="L56">        return this.memberService.signInWithToken(loginToken,  request);</span>
+    }
+
+    /**
+     * 소셜 로그인 처리
+     */
+    //TODO 소셜 로그인 처리
+
+
+    /**
+     * Sign up 회원가입
+     *
+     * @param signUpRequest
+     * @param locale
+     * @return ReturnObject
+     */
+    @PostMapping(UriVersion.API_VERSION_PUBLIC + UriEntity.MEMBER + UriMethod.SIGN_UP)
+    public ResponseEntity&lt;Object&gt; saveMember(@RequestBody SignUpRequest signUpRequest, Locale locale, HttpServletRequest request) throws IOException, GeneralSecurityException, EncoderException {
+<span class="nc" id="L74">        return this.memberService.saveMember(signUpRequest, locale, request);</span>
+    }
+    /**
+     * Member Logout 처리
+     *
+     * @param loginToken
+     * @param 
+     * @return ReturnObject
+     */
+    @PostMapping(UriVersion.API_VERSION_PRIVATE + UriEntity.MEMBER + UriMethod.SIGN_OUT)
+    public ResponseEntity&lt;Object&gt; signOut(@RequestBody LoginToken loginToken,  HttpServletRequest request) throws IOException {
+<span class="nc" id="L85">        return this.memberService.signOut(loginToken,  request);</span>
+    }
+
+
+    /**
+     * Member nickname 중복 체크
+     *
+     * @param member
+     * @param 
+     * @return ResponseEntity&lt;ReturnObject&gt;
+     */
+    @PostMapping(UriVersion.API_VERSION_PUBLIC + UriEntity.MEMBER + UriMethod.CHECK_NICKNAME)
+    public ResponseEntity&lt;Object&gt; checkNickName(@RequestBody Member member ) {
+<span class="nc" id="L98">        return this.memberService.checkNickName(member);</span>
+    }
+
+    /**
+     * Member 정보 로드
+     * idx only
+     *
+     * @param member
+     * @param 
+     * @return
+     */
+    @PostMapping(UriVersion.API_VERSION_PRIVATE + UriEntity.MEMBER + UriMethod.LOAD_MEMBERPROFILE)
+    public ResponseEntity&lt;Object&gt; loadMemberProfile(@RequestBody Member member, HttpServletRequest request ) throws IOException {
+<span class="nc" id="L111">        return this.memberService.loadMemberProfile(member, request);</span>
+    }
+
+    /**
+     * Member 정보 수정
+     * 회원 프로필 수정 &amp; 비지니스 정보 수정
+     *
+     * @param member
+     * @param profileImage
+     * @param defaultImage
+     * @param 
+     * @return
+     */
+    @PostMapping(path = UriVersion.API_VERSION_PRIVATE + UriEntity.MEMBER + UriMethod.MODIFY_MEMBERPROFILE, consumes = {&quot;multipart/form-data&quot;})
+    public ResponseEntity&lt;Object&gt; modifyMemberProfile(@ModelAttribute Member member,
+                                                      @RequestParam(value = &quot;profileImage&quot;, required = false)MultipartFile profileImage,
+                                                      @RequestParam(value = &quot;defaultImage&quot;, required = false) Boolean defaultImage) {
+<span class="nc" id="L128">        MemberModifyObj memberModifyObj = new MemberModifyObj();</span>
+<span class="nc" id="L129">        BeanUtils.copyProperties(member, memberModifyObj);</span>
+<span class="nc" id="L130">        memberModifyObj.setDefaultImage(defaultImage);</span>
+<span class="nc" id="L131">        memberModifyObj.setUploadedFile(profileImage);</span>
+<span class="nc" id="L132">        return this.memberService.modifyMemberProfile(memberModifyObj);</span>
+    }
+
+    /** Member 정보 수정
+     * 회원 프로필 수정 &amp; 비지니스 정보 수정
+     *
+     * @param member
+     * @param 
+     * @return
+     */
+    @PostMapping(UriVersion.API_VERSION_PRIVATE + UriEntity.MEMBER + UriMethod.SAVE_MEMBER_YEAR)
+    public ResponseEntity&lt;Object&gt; saveMemberYear(@RequestBody Member member) {
+<span class="nc" id="L144">        return this.memberService.saveMemberYear(member);</span>
+    }
+
+    @PostMapping(UriVersion.API_VERSION_PRIVATE + UriEntity.MEMBER + UriMethod.GET_ADMIN_CHECK_USERS)
+    public ResponseEntity&lt;Object&gt; getAdminCheckUsers() {
+<span class="nc" id="L149">        return this.memberService.getAdminCheckUsers();</span>
+    }
+
+    @PostMapping(UriVersion.API_VERSION_PRIVATE + UriEntity.MEMBER + UriMethod.GET_SUGGEST_USERS)
+    public ResponseEntity&lt;Object&gt; getSuggestUsers(@RequestBody List&lt;Integer&gt; users) {
+<span class="nc" id="L154">        return this.memberService.getASuggestUsers(users);</span>
+    }
+
+    @PostMapping(UriVersion.API_VERSION_PRIVATE + UriEntity.MEMBER + UriMethod.SEND_CERT_MAIL)
+    public ResponseEntity&lt;Object&gt; sendMailCert(@RequestBody Member member) throws UnsupportedEncodingException, GeneralSecurityException, EncoderException {
+<span class="nc" id="L159">        return this.memberService.sendCertMailToUser(member);</span>
+    }
+
+    @PostMapping(UriVersion.API_VERSION_PUBLIC + UriEntity.MEMBER + UriMethod.TEMP_PWD_SEND)
+    public ResponseEntity&lt;Object&gt; sendTempPwd(@RequestBody Account member, HttpServletRequest request) throws UnsupportedEncodingException, GeneralSecurityException, EncoderException {
+<span class="nc" id="L164">        return this.memberService.sendTempPwd(member, request);</span>
+    }
+
+    @PostMapping(UriVersion.API_VERSION_PUBLIC + UriEntity.MEMBER + UriMethod.CHECK_EMAIL)
+    public ResponseEntity&lt;Object&gt; checkMail(@RequestBody Account member) throws UnsupportedEncodingException, GeneralSecurityException, EncoderException {
+<span class="nc" id="L169">        return this.memberService.checkUserEmail(member);</span>
+    }
+
+    @PostMapping(UriVersion.API_VERSION_PRIVATE + UriEntity.MEMBER + UriMethod.MEMBER_EXIT)
+    public ResponseEntity&lt;Object&gt; memberExit(@RequestBody Member member){
+<span class="nc" id="L174">        return this.memberService.memberExit(member);</span>
+    }
+
+    @PostMapping(UriVersion.API_VERSION_PUBLIC + UriEntity.MEMBER + UriMethod.CHECK_DUPLICATE_EMAIL)
+    public ResponseEntity&lt;Object&gt; checkDuplicateEmail(@RequestBody Account member){
+<span class="nc" id="L179">        return this.memberService.checkDuplicateEmail(member);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

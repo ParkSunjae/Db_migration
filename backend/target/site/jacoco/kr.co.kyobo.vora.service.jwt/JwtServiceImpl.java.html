@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JwtServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">backend</a> &gt; <a href="index.source.html" class="el_package">kr.co.kyobo.vora.service.jwt</a> &gt; <span class="el_source">JwtServiceImpl.java</span></div><h1>JwtServiceImpl.java</h1><pre class="source lang-java linenums">package kr.co.kyobo.vora.service.jwt;
+
+import io.jsonwebtoken.*;
+import kr.co.kyobo.vora.common.ParamConstants;
+import kr.co.kyobo.vora.model.database.Account;
+import kr.co.kyobo.vora.model.jwt.JwtClaim;
+import kr.co.kyobo.vora.model.jwt.JwtValidationResult;
+import kr.co.kyobo.vora.repository.MemberRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.io.UnsupportedEncodingException;
+import java.util.Date;
+
+import static kr.co.kyobo.vora.common.SecurityConstants.EXPIRATION_SECONDES;
+import static kr.co.kyobo.vora.common.SecurityConstants.SECRET;
+
+
+<span class="nc" id="L20">@Slf4j</span>
+@Service
+<span class="nc" id="L22">public class JwtServiceImpl implements JwtService {</span>
+
+    @Autowired
+    private MemberRepository memberRepository;
+
+    @Override
+    public String makeAccessToken(Account account) {
+
+<span class="nc" id="L30">        String token = null;</span>
+<span class="nc" id="L31">        long nowMillis = System.currentTimeMillis();</span>
+<span class="nc" id="L32">        Date now = new Date(nowMillis);</span>
+<span class="nc" id="L33">        Date expDate = new Date(nowMillis + ( EXPIRATION_SECONDES * 1000 ));</span>
+<span class="nc" id="L34">        token = Jwts.builder()</span>
+<span class="nc" id="L35">                .setHeaderParam(ParamConstants.ALGS, ParamConstants.HS512)</span>
+<span class="nc" id="L36">                .setHeaderParam(ParamConstants.TYP, ParamConstants.JWT)</span>
+<span class="nc" id="L37">                .setIssuedAt(now)</span>
+<span class="nc" id="L38">                .setSubject(ParamConstants.USER)</span>
+<span class="nc" id="L39">                .setIssuer(ParamConstants.VORA)</span>
+
+<span class="nc" id="L41">                .claim(ParamConstants.DEVICE_TYPE, account.getDeviceType())</span>
+<span class="nc" id="L42">                .claim(ParamConstants.ACCOUNT_TYPE, account.getAccountType())</span>
+<span class="nc" id="L43">                .claim(ParamConstants.ACCOUNT_IDX, account.getIdx())</span>
+<span class="nc" id="L44">                .claim(ParamConstants.MEMBER_IDX, account.getUserIdx())</span>
+
+<span class="nc" id="L46">                .setExpiration(expDate)</span>
+<span class="nc" id="L47">                .signWith(SignatureAlgorithm.HS512, this.generateKey())</span>
+<span class="nc" id="L48">                .compact();</span>
+<span class="nc" id="L49">        return token;</span>
+    }
+
+    @Override
+    public JwtValidationResult validateToken(String accessToken) {
+<span class="nc" id="L54">        JwtValidationResult result = new JwtValidationResult();</span>
+        try{
+<span class="nc" id="L56">            Jws&lt;Claims&gt; claims = Jwts.parser()</span>
+<span class="nc" id="L57">                    .setSigningKey(this.generateKey())</span>
+<span class="nc" id="L58">                    .parseClaimsJws(accessToken);</span>
+<span class="nc" id="L59">            result.setIsValid(true);</span>
+<span class="nc" id="L60">            result.setMessage(ParamConstants.OK);</span>
+<span class="nc" id="L61">        }catch(JwtException e){</span>
+<span class="nc" id="L62">            result.setIsValid(false);</span>
+<span class="nc bnc" id="L63" title="All 2 branches missed.">            if(e instanceof ExpiredJwtException){</span>
+                //JWT 권한claim 검사가 실패했을 때
+<span class="nc" id="L65">                result.setMessage(&quot;expired jwt exception&quot;);</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">            }else if(e instanceof ClaimJwtException){</span>
+                //유효 기간이 지난 JWT를 수신한 경우
+<span class="nc" id="L68">                result.setMessage(&quot;claim jwt exception&quot;);</span>
+<span class="nc bnc" id="L69" title="All 2 branches missed.">            }else if(e instanceof MalformedJwtException){</span>
+                //구조적인 문제가 있는 JWT인 경우
+<span class="nc" id="L71">                result.setMessage(&quot;malformed jwt exception&quot;);</span>
+            }
+<span class="nc bnc" id="L73" title="All 2 branches missed.">            else if(e instanceof SignatureException){</span>
+                // 접근이 허용되기 전인 JWT가 수신된 경우
+<span class="nc" id="L75">                result.setMessage(&quot;signature exception&quot;);</span>
+            }
+<span class="nc bnc" id="L77" title="All 2 branches missed.">            else if(e instanceof UnsupportedJwtException){</span>
+                //시그너처 연산이 실패하였거나, JWT의 시그너처 검증이 실패한 경우
+<span class="nc" id="L79">                result.setMessage(&quot;unsupported jwt exception&quot;);</span>
+            }
+            else{
+                //기타
+<span class="nc" id="L83">                result.setMessage(e.getMessage());</span>
+            }
+            //result.setException(e);
+<span class="nc" id="L86">        }</span>
+<span class="nc" id="L87">        return result;</span>
+    }
+
+    public JwtClaim parseToken(String accessToken){
+<span class="nc" id="L91">        Jws&lt;Claims&gt; claims = Jwts.parser()</span>
+<span class="nc" id="L92">                .setSigningKey(this.generateKey())</span>
+<span class="nc" id="L93">                .parseClaimsJws(accessToken);</span>
+<span class="nc" id="L94">        JwtClaim claim = new JwtClaim();</span>
+
+<span class="nc" id="L96">        claim.setDt((String) claims.getBody().get(ParamConstants.DEVICE_TYPE));</span>
+<span class="nc" id="L97">        claim.setMidx(Integer.toString((Integer) claims.getBody().get(ParamConstants.MEMBER_IDX)));</span>
+<span class="nc" id="L98">        claim.setAt((String) claims.getBody().get(ParamConstants.ACCOUNT_TYPE));</span>
+<span class="nc" id="L99">        claim.setAidx(Integer.toString((Integer) claims.getBody().get(ParamConstants.ACCOUNT_IDX)));</span>
+<span class="nc" id="L100">        return claim;</span>
+    }
+
+    private byte[] generateKey() {
+<span class="nc" id="L104">        byte[] apiKeySecretBytes = new byte[0];</span>
+        try {
+<span class="nc" id="L106">            apiKeySecretBytes = SECRET.getBytes(ParamConstants.LOCALE_CHAR_SET);</span>
+<span class="nc" id="L107">        } catch (UnsupportedEncodingException e) {</span>
+<span class="nc" id="L108">            e.printStackTrace();</span>
+<span class="nc" id="L109">        }</span>
+<span class="nc" id="L110">        return apiKeySecretBytes;</span>
+    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

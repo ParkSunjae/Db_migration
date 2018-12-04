@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FeedReportServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">backend</a> &gt; <a href="index.source.html" class="el_package">kr.co.kyobo.vora.service.feedReport</a> &gt; <span class="el_source">FeedReportServiceImpl.java</span></div><h1>FeedReportServiceImpl.java</h1><pre class="source lang-java linenums">package kr.co.kyobo.vora.service.feedReport;
+
+import kr.co.kyobo.vora.messages.ErrorMessages;
+import kr.co.kyobo.vora.model.api.RecommendResultData;
+import kr.co.kyobo.vora.model.api.ResponseEntityUtil;
+import kr.co.kyobo.vora.model.database.FeedReport;
+import kr.co.kyobo.vora.repository.FeedReportRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@Transactional
+<span class="nc" id="L15">public class FeedReportServiceImpl implements FeedReportService {</span>
+
+    @Autowired
+    FeedReportRepository feedReportRepository;
+
+    @Override
+    public ResponseEntity&lt;Object&gt; saveFeedReport(FeedReport feedReport) {
+<span class="nc" id="L22">        int rst = feedReportRepository.saveFeedReport(feedReport);</span>
+<span class="nc bnc" id="L23" title="All 2 branches missed.">        if(rst&gt;0){</span>
+<span class="nc" id="L24">            return ResponseEntityUtil.makeResultSuccess(&quot;&quot;);</span>
+        }else{
+<span class="nc" id="L26">            return ResponseEntityUtil.makeResultError(ErrorMessages.SYSTEM_DB_INSERT_FAIL.getCode());</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>
